@@ -6,7 +6,7 @@ The goal of this project is to analyze the patterns in methylation across breast
 
 Documenting the data file exploration since this data was shared by a collaborator.
 
-* Files copied from `/projects/b1042/BartomLab/SeemaMethylation/` (copied to `copied_from_b1042/`)
+* Files copied from `/projects/b1042/BartomLab/SeemaMethylation/` (copied to `/projects/p30791/methylation/copied_from_b1042/`)
   * Directory `Clare_Project_003/`
     * `Clare_Project_003_ControlDashboard.csv` -- columns: `Category,Control,BeadType,Sample_ID,Sentrix_Label,Section 1 X,Section 1 Y` // 39,953 rows 
     * `Clare_Project_003_Group_Meth_Profile.txt` -- columns: `Index,TargetID,ProbeID_A,ProbeID_B,Default Group.AVG_Beta,Default Group.Intensity` // 865,919 rows 
@@ -19,7 +19,7 @@ Documenting the data file exploration since this data was shared by a collaborat
   * `ReNormalized.MethylData.txt` -- header section (8 rows) followed by a tab-separated data section with 2533 columns (`TargetID  ProbeID_A  ProbeID_B  206949970109_R01C01.AVG_Beta  ...  GENOME_BUILD  CHR    MAPINFO`) and 866k rows
   * Directory `SusanClareSFC03357200/` has file formats including `*.project`, `*.project.bin`, `*.analysis`, and `*.analysis.config`
   * `TakaSehl_meta_ordered.withAdj.sorted.csv` -- Sample metadata? with columns `IDAT,ID,Sample Region,Case/Control,Age,Race,BMI` and 472 rows
-* Files copied from `/projects/b1122/gannon/CUB/` (copied to `copied_from_b1122/`)
+* Files copied from `/projects/b1122/gannon/CUB/` (copied to `/projects/p30791/methylation/copied_from_b1122/`)
   * `CUB.Rproj`
   * `data/`
     * `archive/`
