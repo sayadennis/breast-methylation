@@ -9,8 +9,8 @@ args = commandArgs(trailingOnly=TRUE)
 if (length(args)!=2) {
   stop("Please provide the path IDAT directory and output directory.", call.=FALSE)
 } else {
-  idat_dir = args[1]
-  out_dir = args[2]
+  idat_dir = args[1]  # e.g. "/projects/p30791/methylation/data/IDAT_all"
+  out_dir = args[2]  # e.g. "/projects/p30791/methylation/sesame_out"
 }
 
 if (!dir.exists(out_dir)) {
@@ -39,11 +39,17 @@ print("Top rows of the first item of SDF prepped")
 print(head(sdf_prepped[[1]]))
 print(paste0("Length of SDF-prepped: ", length(sdf_prepped)))
 
+# Save SDF object as Rdata
+saveRDS(sdf_prepped, file=paste0(out_dir, "/sdf_prepped.RDS"))
+
 #### Calculate quality metrics ####
 
 qcs = openSesame(idat_dir, prep="", func=sesameQC_calcStats, BPPARAM = BiocParallel::MulticoreParam(8))
 
 print(paste0("Length of QC object: ", length(qcs)))
+
+# Save QC list object as Rdata
+saveRDS(qcs, file=paste0(out_dir, "/qcs.RDS"))
 
 qcs_df = do.call(rbind, lapply(qcs, as.data.frame))
 print(paste0("Dimensions of QC dataframe: ", dim(qcs_df)[1], "rows x ", dim(qcs_df)[2], "columns."))
