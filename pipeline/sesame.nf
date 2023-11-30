@@ -1,4 +1,4 @@
-params.idat_dir = "/projects/p30791/methylation/copied_from_b1122/data/IDAT_Files/IDAT_only"
+params.idat_dir = "/projects/p30791/methylation/data/IDAT_all"
 params.out_dir = "/projects/p30791/methylation/sesame_out"
 
 process basic_preprocess {
