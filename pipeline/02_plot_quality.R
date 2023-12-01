@@ -2,15 +2,21 @@ library(stringr)
 library(sesame)
 library(ggplot2)
 
-din = "/projects/p30791/methylation/sesame_out"
-meta_dir = "/projects/p30791/methylation/data"
-dout = "/projects/p30791/methylation/plots"
+args = commandArgs(trailingOnly=TRUE)
+
+if (length(args)!=3) {
+  stop("Please provide 3 arguments: 1) input directory, 2) output directory to write plots to, and 3) metadata file path.", call.=FALSE)
+} else {
+  din = args[1]  # e.g. "/projects/p30791/methylation/sesame_out"
+  dout = args[2]  # e.g. "/projects/p30791/methylation/plots"
+  meta_fn = args[3]  # e.g. "/projects/p30791/methylation/data/meta.csv"
+}
 
 ## Load data
 sdfs = readRDS(paste0(din, "/sdf_prepped.RDS"))
 qcs = readRDS(paste0(din, "/qcs.RDS"))
 qc_df = read.csv(paste0(din, "/qc_metrics.csv"))
-meta = read.csv(paste0(meta_dir, "/meta.csv"))
+meta = read.csv(meta_fn)
 
 sesameQC_plotBar_custom <- function(qcs, key) {
     if (is(qcs, "sesameQC")) { qcs <- list(qcs); }
@@ -49,8 +55,10 @@ for (groupname in c("TU", "AN", "OQ", "CUB", "Normal")) {
             ratio = 1.0
         }
         qc_subset = qcs[meta[meta["Sample.Region"]==groupname,]$IDAT]
+        png(filename = paste0(dout, "/qc_plotbar_", key, "_", groupname, ".png"), width=ratio * 7.5, height=1.0 * 7.5, type="cairo")
         sesameQC_plotBar_custom(qc_subset, key=key)
-        ggsave(filename=paste0(dout, "/qc_plotbar_", key, "_", groupname, ".png"), width=ratio * 7.5, height=1.0 * 7.5)
+        dev.off()
+        #ggsave(filename=paste0(dout, "/qc_plotbar_", key, "_", groupname, ".png"), width=ratio * 7.5, height=1.0 * 7.5)
     }
 }
 
@@ -65,16 +73,16 @@ plot_sampleids = c(distorted_sampleids, meta$IDAT[1])
 for (idat_id in plot_sampleids) {
     sdf = sdfs[idat_id][[1]]
 
-    png(filename = paste0(dout, "/qc_plotRedGrnQQ_", idat_id, ".png"))
+    png(filename = paste0(dout, "/qc_plotRedGrnQQ_", idat_id, ".png"), type = "cairo")
     sesameQC_plotRedGrnQQ(sdf)
     dev.off()
     
-    png(filename = paste0(dout, "/qc_sesameQC_plotIntensVsBetas_", idat_id, ".png"))
+    png(filename = paste0(dout, "/qc_sesameQC_plotIntensVsBetas_", idat_id, ".png"), type = "cairo")
     sesameQC_plotIntensVsBetas(sdf)
     dev.off()
 }
 
-png(filename = paste0(dout, "/qc_sesameQC_plotHeatSNPs.png"))
-sesameQC_plotHeatSNPs(sdfs)
+png(filename = paste0(dout, "/qc_sesameQC_plotHeatSNPs.png"), type = "cairo")
+sesameQC_plotHeatSNPs(sdfs)  # plots SNP probes and can be used to detect sample swaps
 dev.off()
 

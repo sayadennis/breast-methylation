@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -A p30791
 #SBATCH -p normal
-#SBATCH -t 48:00:00
+#SBATCH -t 2:00:00
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH --mem=48G
+#SBATCH --mem=36G
 #SBATCH --job-name=plotqual
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL
@@ -15,5 +15,5 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-Rscript --vanilla 02_plot_quality.R
+Rscript --vanilla 02_plot_quality.R "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/plots" "/projects/p30791/methylation/data/meta.csv"
 
