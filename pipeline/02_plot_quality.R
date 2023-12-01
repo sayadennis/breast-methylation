@@ -7,7 +7,7 @@ meta_dir = "/projects/p30791/methylation/data"
 dout = "/projects/p30791/methylation/plots"
 
 ## Load data
-#sdf = readRDS(paste0(din, "/sdf_prepped.RDS"))
+sdfs = readRDS(paste0(din, "/sdf_prepped.RDS"))
 qcs = readRDS(paste0(din, "/qcs.RDS"))
 qc_df = read.csv(paste0(din, "/qc_metrics.csv"))
 meta = read.csv(paste0(meta_dir, "/meta.csv"))
@@ -40,7 +40,7 @@ sesameQC_plotBar_custom <- function(qcs, key) {
     plt
 }
 
-## Plot QCs
+## Plot QC bar graphs
 for (groupname in c("TU", "AN", "OQ", "CUB", "Normal")) {
     for (key in c("frac_dt", "mean_intensity", "median_beta_cg", "median_beta_ch", "RGratio", "RGdistort")) {
         if (groupname=="Normal") {
@@ -60,4 +60,21 @@ print(paste0("Samples with >0.5 distortion: ", paste0(distorted_sampleids, colla
 print("Meta data of these samples:")
 print(meta[meta$IDAT %in% distorted_sampleids,])
 
+## Plot QC scatter plots
+plot_sampleids = c(distorted_sampleids, meta$IDAT[1])
+for (idat_id in plot_sampleids) {
+    sdf = sdfs[idat_id][[1]]
+
+    png(filename = paste0(dout, "/qc_plotRedGrnQQ_", idat_id, ".png"))
+    sesameQC_plotRedGrnQQ(sdf)
+    dev.off()
+    
+    png(filename = paste0(dout, "/qc_sesameQC_plotIntensVsBetas_", idat_id, ".png"))
+    sesameQC_plotIntensVsBetas(sdf)
+    dev.off()
+}
+
+png(filename = paste0(dout, "/qc_sesameQC_plotHeatSNPs.png"))
+sesameQC_plotHeatSNPs(sdfs)
+dev.off()
 
