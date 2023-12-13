@@ -2,15 +2,21 @@ library(dplyr)
 library(tidyr)
 library(sesame)
 
-ddata = "/projects/p30791/methylation/sesame_out"
-dmeta = "/projects/p30791/methylation/data"
-dout = "/projects/p30791/methylation/plots"
+args = commandArgs(trailingOnly=TRUE)
+
+if (length(args)!=3) {
+  stop("Please provide 3 arguments: 1) data (?) directory, 2) metadata file path, and 3) output to write predicted meta information.", call.=FALSE)
+} else {
+  ddata = args[1]  # e.g. "/projects/p30791/methylation/sesame_out"
+  meta_fn = args[2]  # e.g. "/projects/p30791/methylation/data/meta.csv"
+  dout = args[3]  # e.g. "/projects/p30791/methylation/sesame_out/data_summary"
+}
 
 ## download clock file from http://zwdzwd.github.io/InfiniumAnnotation
 #model <- readRDS("~/Downloads/Clock_Horvath353.rds")
 ################################################################
 
-meta = read.csv(paste0(dmeta, "/meta.csv"))
+meta = read.csv(meta_fn)
 sdfs = readRDS(paste0(ddata, "/sdf_prepped.RDS"))
 betas = read.csv(paste0(ddata, "/betas.csv"), row.names=1)
 
@@ -29,7 +35,7 @@ for (idat_id in names(sdfs)) {
     #meta[meta$IDAT==idat_id,"PredictedAge"] = predictAge(betas_sample, model)  # cannot find model in specified link
 }
 
-write.table(meta, "/home/srd6051/predicted_meta.csv", row.names = FALSE, quote = FALSE, sep=",")
+write.table(meta, paste0(dout,"/predicted_meta.csv"), row.names = FALSE, quote = FALSE, sep=",")
 
 female_ratio <- sum(meta$InferredSex == 'FEMALE') / nrow(meta)
 cat(sprintf("Value counts of meta sex: %.1f%% FEMALE\n", 100 * female_ratio))

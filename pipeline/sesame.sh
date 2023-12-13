@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -A p30791
 #SBATCH -p normal
-#SBATCH -t 24:00:00
+#SBATCH -t 48:00:00
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH --mem=1G
@@ -11,7 +11,7 @@
 #SBATCH --output=/projects/p30791/methylation/out/sesame_nextflow.out
 
 module purge all
-module load nextflow/22.04.4
+module load nextflow/23.04.3
 
 cd ~/breast-methylation/pipeline/
 

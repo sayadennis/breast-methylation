@@ -27,7 +27,8 @@ print(f'Number of cases: {n_cases} // controls: {n_controls}')
 # print(f'{pct_case:/1f}% of cases have 3 samples per patient, and {pct_control:.1f}% of controls have 1 sample per patient.')
 
 # Distribution of race across case/control category
-cts = pd.crosstab(meta['Case/Control'], meta['Race']) # counts
+cc_race = meta[['ID', 'Case/Control', 'Race']].drop_duplicates(ignore_index=True)
+cts = pd.crosstab(cc_race['Case/Control'], cc_race['Race']) # counts
 cts['Total'] = cts.sum(axis=1)
 cts.index.name = None
 cts.columns.name = None
