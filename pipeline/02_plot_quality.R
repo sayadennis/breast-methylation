@@ -67,6 +67,7 @@ distorted_sampleids = qc_df[abs(qc_df$RGdistort-1)>0.5,]$X
 print(paste0("Samples with >0.5 distortion: ", paste0(distorted_sampleids, collapse=", ")))
 print("Meta data of these samples:")
 print(meta[meta$IDAT %in% distorted_sampleids,])
+writeLines(distorted_sampleids, paste0(din, "/exclude_IDATs.txt"))
 
 ## Plot QC scatter plots
 plot_sampleids = c(distorted_sampleids, meta$IDAT[1])
