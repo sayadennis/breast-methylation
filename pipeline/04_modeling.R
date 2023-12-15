@@ -19,45 +19,42 @@ betas = betas[,colnames(betas) %in% paste0("X", meta$IDAT)]
 betas = as.matrix(betas)
 
 ## Exclude probes that are missing levels on variables of interest (sample region etc.)
-cpg_ok = (
-    checkLevels(betas, meta$Sample.Region) &
-    checkLevels(betas, meta$Case.Control)
-)
+cpg_ok = checkLevels(betas, meta$Sample.Region)
 print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
 
 betas = betas[cpg_ok,]
-
-## Change metadata into factors
-meta$Sample.Region = relevel(factor(meta$Sample.Region), "Normal")
-meta$Case.Control = relevel(factor(meta$Case.Control), "normal")
 
 ###########################################
 #### Differential methylation analysis ####
 ###########################################
 
-## Differential methylation analysis
-smry = DML(betas, ~Sample.Region + Age, meta=meta)  # Case.Control + BMI
-
-saveRDS(smry, "/projects/p30791/methylation/sesame_out/model_summary.RDS")
-
-test_result = summaryExtractTest(smry)
-
-test = test_result %>% 
-    dplyr::filter(FPval_Sample.Region < 0.05, Eff_Sample.Region > 0.1) %>% 
-    select(FPval_Sample.Region, Eff_Sample.Region)
-
-test_result %>% dplyr::select(Probe_ID, Est_Age, Pval_Age) %>% tail
+for (reference in c("Normal", "TU")) {
+    ## Change metadata into factors
+    #reference = "Normal" # "TU"
+    meta$Sample.Region = relevel(factor(meta$Sample.Region), reference)
+ 
+    ## Differential methylation analysis
+    smry = DML(betas, ~Sample.Region + Age, meta=meta)  # Case.Control + BMI
+    saveRDS(smry, paste0("/projects/p30791/methylation/sesame_out/model_summary_ref", reference, ".RDS"))
+    test_result = summaryExtractTest(smry)
+    write.csv(
+        test_result, paste0("/projects/p30791/methylation/sesame_out/DML_results_ref", reference, ".csv"), 
+        quote = FALSE, row.names = FALSE
+    )
+ 
+    ## DMR (Differentially methylated regions)
+    for (contrast in dmContrasts(smry)) {
+        merged = DMR(betas, smry, contrast, platform="EPIC") # merge probes to regions
+        write.csv(
+            merged, paste0("/projects/p30791/methylation/sesame_out/DMR_results_", contrast, "_ref", reference, ".csv"), 
+            quote = FALSE, row.names = FALSE
+        )
+    }
+}
 
 df = data.frame(Age = meta$Age,
     BetaValue = betas[test_result$Probe_ID[nrow(test_result)],])
 
 ggplot(df, aes(Age, BetaValue)) + geom_smooth(method="lm") + geom_point()
 ggsave(paste0(plotdir, "/age_vs_betas.png"))
-
-## DMR (Differentially methylated regions)
-dmContrasts(smry)  # pick a contrast from output
-
-merged = DMR(betas, smry, "Sample.RegionTU", platform="EPIC") # merge probes to regions
-
-sig = merged %>% dplyr::filter(Seg_Pval_adj < 0.01)  # statistically significant probes and regions
 
