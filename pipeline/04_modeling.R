@@ -11,7 +11,7 @@ plotdir = "/projects/p30791/methylation/plots"
 ############################
 
 ## Load data
-betas = read.table("/projects/p30791/methylation/sesame_out/betas.csv", row.names=1, sep=",", header=TRUE)  # nrows=2000 for testing
+betas = read.table("/projects/p30791/methylation/sesame_out/betas_filtered.csv", row.names=1, sep=",", header=TRUE)  # nrows=2000 for testing
 meta = read.csv("/projects/p30791/methylation/data/meta.csv")
 
 # TODO: look into why betas includes more samples names than meta??
@@ -30,7 +30,6 @@ betas = betas[cpg_ok,]
 
 for (reference in c("Normal", "TU")) {
     ## Change metadata into factors
-    #reference = "Normal" # "TU"
     meta$Sample.Region = relevel(factor(meta$Sample.Region), reference)
  
     ## Differential methylation analysis

@@ -87,3 +87,12 @@ png(filename = paste0(dout, "/qc_sesameQC_plotHeatSNPs.png"), type = "cairo")
 sesameQC_plotHeatSNPs(sdfs)  # plots SNP probes and can be used to detect sample swaps
 dev.off()
 
+## Remove problematic samples and re-save filtered data
+filtered_sdfs = sdfs[!(names(sdfs) %in% distorted_sampleids)]
+saveRDS(filtered_sdfs, paste0(din, '/sdf_filtered.RDS'))
+
+betas = read.table(paste0(din, '/betas.csv'), row.names=1, sep=",")
+filtered_betas = betas[,!(colnames(betas) %in% paste0('X', distorted_sampleids))]
+
+write.table(filtered_betas, paste0(din, '/betas_filtered.csv'), sep=",", row.names=TRUE, col.names=TRUE, quote=FALSE)
+
