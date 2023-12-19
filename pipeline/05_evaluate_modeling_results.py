@@ -45,7 +45,10 @@ for ref in dml_results.keys():
     for tissue_type in tissue_types:
         if tissue_type not in ref:
             # Record significance WITH FDR CORRECTION
-            dml_significance[ref][tissue_type] = (false_discovery_control(dml_results[ref][f'Pval_Sample.Region{tissue_type}']) < p_thres)
+            p_vals = dml_results[ref][f'Pval_Sample.Region{tissue_type}']
+            p_vals.replace(0, 1e-320, inplace=True)  # fix underflow
+            p_vals.fillna(0.999999, inplace=True)
+            dml_significance[ref][tissue_type] = false_discovery_control(p_vals) < p_thres
         else:
             # remove reference column here
             dml_significance[ref] = dml_significance[ref].drop(tissue_type, axis=1)
@@ -60,33 +63,38 @@ for ref in dml_results.keys():
     plt.savefig(f'{plot_dir}/upset_{ref}.png')
     plt.close()
 
-## Differentially methylated regions
-
-dmr_significance = {}
-upset_data = {}
-
-for ref in dmr_results.keys():
-    dmr_significance[ref] = pd.DataFrame(index=np.sort(dmr_results[ref]['AN'].Seg_ID.unique()), columns=tissue_types)
-    for tissue_type in tissue_types:
-        if tissue_type not in ref:
-            segs = dmr_results[key][comparison][['Seg_ID', 'Seg_Chrm', 'Seg_Start', 'Seg_End', 'Seg_Est', 'Seg_Pval', 'Seg_Pval_adj']].drop_duplicates(ignore_index=True).sort_values('Seg_ID')
-            dmr_significance[ref][tissue_type] = (segs.Seg_Pval_adj < p_thres).values
-        else:
-            # remove reference column here
-            dmr_significance[ref] = dmr_significance[ref].drop(tissue_type, axis=1)
-    dmr_significance[ref].rename({'TU': 'Tumor', 'AN': 'Adjacent normal', 'OQ': 'Opposite quadrant', 'CUB': 'Contralateral'}, axis=1, inplace=True)
-    upset_data[ref] = dmr_significance[ref].groupby(list(dmr_significance[ref].columns)).size()
-
-## Observation: regions are either significant in all tissue types or in none of the tissue types
-
-
 #############################################
 #### Get more information about segments ####
 #############################################
 
+seg_cols = ['Seg_ID', 'Seg_Chrm', 'Seg_Start', 'Seg_End', 'Seg_Est', 'Seg_Pval', 'Seg_Pval_adj']
+segs = dmr_results['refNormal']['AN'][seg_cols].drop_duplicates(ignore_index=True)
+
 # Segment length (kb) distribution
+seglen = (segs.Seg_End - segs.Seg_Start).values.ravel()
+for n in [1,10,50,100,250,500,750]:
+    print(f'Number of segments larger than {n}kb: {sum(seglen>n*1000)}')
 
 # Number of probes in a segment
+n_probes_per_seg = dmr_results['refNormal']['AN'].groupby('Seg_ID').size().values.ravel()
+for n in [2,5,10,25,50,75]:
+    print(f'Segment with >{n} probes: {sum(n_probes_per_seg>n)}')
 
-# Look into trends in larger segments
+# Which chromosomes do larger segments lie in?
+size_thres = 50e+3  # 50kb
+n_segs_per_chrom = segs.iloc[seglen > size_thres,:].groupby('Seg_Chrm').size()
+chroms = [f'chr{i}' for i in range(1,23)] + ['chrX', 'chrY']
+
+fig, ax = plt.subplots(figsize=(7,5))
+
+ax.bar(np.arange(len(chroms)), n_segs_per_chrom.loc[chroms])
+ax.set_xticks(np.arange(len(chroms)))
+ax.set_xticklabels(chroms, rotation=45, ha='right')
+ax.set_xlabel('Chromosome')
+ax.set_ylabel(f'Number of segments')
+ax.set_title(f'Distribution of large (>{int(size_thres/1e+3)}kb) segments across chromosomes')
+
+plt.tight_layout()
+fig.savefig(f'{plot_dir}/num_large_segs_by_chrom.png')
+plt.close()
 
