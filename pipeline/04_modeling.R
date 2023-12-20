@@ -11,7 +11,7 @@ plotdir = "/projects/p30791/methylation/plots"
 ############################
 
 ## Load data
-betas = read.table("/projects/p30791/methylation/sesame_out/betas_filtered.csv", row.names=1, sep=",", header=TRUE)  # nrows=2000 for testing
+betas = read.table("/projects/p30791/methylation/sesame_out/betas_processed.csv", row.names=1, sep=",", header=TRUE)  # nrows=2000 for testing
 meta = read.csv("/projects/p30791/methylation/data/meta.csv")
 
 # TODO: look into why betas includes more samples names than meta??
@@ -23,6 +23,7 @@ cpg_ok = checkLevels(betas, meta$Sample.Region)
 print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
 
 betas = betas[cpg_ok,]
+meta = meta[paste0("X", meta$IDAT) %in% colnames(betas),]
 
 ###########################################
 #### Differential methylation analysis ####

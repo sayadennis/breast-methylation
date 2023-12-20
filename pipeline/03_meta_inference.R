@@ -17,8 +17,8 @@ if (length(args)!=3) {
 ################################################################
 
 meta = read.csv(meta_fn)
-sdfs = readRDS(paste0(ddata, "/sdf_prepped.RDS"))
-betas = read.csv(paste0(ddata, "/betas.csv"), row.names=1)
+sdfs = readRDS(paste0(ddata, "/sdf_processed.RDS"))
+betas = read.csv(paste0(ddata, "/betas_processed.csv"), row.names=1)
 
 for (idat_id in names(sdfs)) {
     sdf = sdfs[idat_id][[1]]
