@@ -4,7 +4,7 @@
 #SBATCH -t 12:00:00
 #SBATCH -N 1
 #SBATCH -n 8
-#SBATCH --mem=200G
+#SBATCH --mem=140G
 #SBATCH --job-name=preproc
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL
