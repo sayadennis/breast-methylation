@@ -1,10 +1,10 @@
 #!/bin/bash
 #SBATCH -A p30791
-#SBATCH -p short
-#SBATCH -t 4:00:00
+#SBATCH -p normal
+#SBATCH -t 10:00:00
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH --mem=96G
+#SBATCH --mem=72G
 #SBATCH --job-name=modeling
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL

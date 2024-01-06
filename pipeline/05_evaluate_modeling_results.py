@@ -2,6 +2,8 @@ import os
 import numpy as np
 import pandas as pd
 from scipy.stats import false_discovery_control
+from scipy.cluster.hierarchy import linkage, dendrogram
+from scipy.spatial.distance import squareform
 import upsetplot
 from upsetplot import UpSet
 import matplotlib.pyplot as plt
@@ -15,8 +17,10 @@ plot_dir = '/projects/p30791/methylation/plots'
 
 dml_results = {
     'Normal' : pd.read_csv(f'{din}/DML_results_refNormal.csv'),
-    'TU' : pd.read_csv(f'{din}/DML_results_refTU.csv'),
     'CUB' : pd.read_csv(f'{din}/DML_results_refCUB.csv'),
+    'OQ' : pd.read_csv(f'{din}/DML_results_refOQ.csv'),
+    'AN' : pd.read_csv(f'{din}/DML_results_refAN.csv'),
+    'TU' : pd.read_csv(f'{din}/DML_results_refTU.csv'),
 }
 
 tissue_types = ['TU', 'AN', 'OQ', 'CUB', 'Normal']
@@ -63,6 +67,46 @@ for ref in dml_results.keys():
     plt.title(f'Number of probes differentially methylated compared to {ref}')
     plt.savefig(f'{plot_dir}/upset_ref{ref}.png')
     plt.close()
+
+## Interpret the number of significantly different probes as "distances" between each category
+num_diff_probes = pd.DataFrame(0., index=tissue_types, columns=tissue_types)
+
+for ref_category in tissue_types:
+    for comp_category in tissue_types:
+        if f'Pval_Sample.Region{comp_category}' in dml_results[ref_category].columns:
+            p_vals = dml_results[ref_category][f'Pval_Sample.Region{comp_category}']
+            p_vals.replace(0, 1e-320, inplace=True)  # fix underflow
+            p_vals.fillna(0.999999, inplace=True)
+            num_sig = (false_discovery_control(p_vals) < p_thres).sum()
+            num_diff_probes.loc[ref_category,comp_category] = num_sig
+
+# Since matrix is slightly not symmetrical, make it symmetrical
+for i in tissue_types:
+    for j in tissue_types:
+        if num_diff_probes.loc[i,j]!=num_diff_probes.loc[j,i]:
+            avg_num = np.mean([num_diff_probes.loc[i,j], num_diff_probes.loc[j,i]])
+            num_diff_probes.loc[i,j] = avg_num
+            num_diff_probes.loc[j,i] = avg_num
+
+distances = squareform(num_diff_probes)
+linkage_matrix = linkage(distances, method='average')
+
+fig, ax = plt.subplots()
+dendrogram(
+    linkage_matrix, 
+    labels=['TU', 'AN', 'OQ', 'CUB', 'Normal'],
+    orientation='top', distance_sort='descending'
+)
+ax.set_xlabel('Sample categories')
+ax.set_ylabel('Number of significantly different probes')
+ax.set_title('Sample region similarity by differential methylation')
+ax.spines['top'].set_visible(False)
+ax.spines['bottom'].set_visible(False)
+ax.spines['right'].set_visible(False)
+ax.spines['left'].set_visible(False)
+plt.tight_layout()
+fig.savefig(f'{plot_dir}/tissue_type_dendrogram_betas.png')
+plt.close()
 
 #############################################
 #### Get more information about segments ####

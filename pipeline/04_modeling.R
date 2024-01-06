@@ -29,7 +29,7 @@ meta = meta[paste0("X", meta$IDAT) %in% colnames(betas),]
 #### Differential methylation analysis ####
 ###########################################
 
-for (reference in c("Normal", "TU")) {
+for (reference in c("Normal", "CUB", "OQ", "AN", "TU")) {
     ## Change metadata into factors
     meta$Sample.Region = relevel(factor(meta$Sample.Region), reference)
  
