@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -A p30791
+#SBATCH -A p31931
 #SBATCH -p normal
 #SBATCH -t 12:00:00
 #SBATCH -N 1
@@ -15,5 +15,5 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-Rscript --vanilla 01_preprocess_qc.R "/projects/p30791/methylation/data/IDAT_all" "/projects/p30791/methylation/sesame_out"
+Rscript --vanilla 01_preprocess_qc.R "/projects/p30791/methylation/data/IDAT_all" "/projects/p30791/methylation/data/meta.csv" "/projects/p30791/methylation/sesame_out"
 
