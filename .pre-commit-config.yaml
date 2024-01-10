@@ -13,6 +13,7 @@ repos:
         types: [python]
         args: [
             "--disable=C0103",
+            "--disable=missing-module-docstring",
         ]
 
   - repo: https://github.com/pycqa/isort
