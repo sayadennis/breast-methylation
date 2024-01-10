@@ -17,3 +17,9 @@ cd ~/breast-methylation/pipeline/
 
 Rscript --vanilla 02_plot_quality.R "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/plots" "/projects/p30791/methylation/data/meta.csv"
 
+module purge all
+module load python-miniconda3/4.12.0
+
+source activate methylation
+
+python 02_plot_quality.py "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/data/meta.csv" "/projects/p30791/methylation/plots"
