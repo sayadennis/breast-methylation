@@ -1,5 +1,5 @@
 #!/bin/bash
-#SBATCH -A p30791
+#SBATCH -A p31931
 #SBATCH -p normal
 #SBATCH -t 24:00:00
 #SBATCH -N 1
@@ -15,10 +15,10 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-Rscript --vanilla 03_meta_inference.R
+Rscript --vanilla 03_meta_inference.R "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/data/meta.csv" "/projects/p30791/methylation/sesame_out/data_summary"
 
 module load python-miniconda3/4.12.0
 source activate methylation
 
-python 03_meta_inference_eval.py
+python 03_meta_inference.py
 
