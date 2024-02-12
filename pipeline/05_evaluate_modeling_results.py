@@ -93,7 +93,9 @@ for ref, _ in dml_results.items():
     plt.close()
 
 ## Interpret the number of significantly different probes as "distances" between each category
+tissue_types.reverse()
 num_diff_probes = pd.DataFrame(0.0, index=tissue_types, columns=tissue_types)
+trends = pd.DataFrame(index=dml_results["Normal"].Probe_ID, columns=tissue_types)
 
 for ref_category, comp_category in [
     ("Normal", "CUB"),
@@ -106,16 +108,45 @@ for ref_category, comp_category in [
         p_vals.replace(0, 1e-320, inplace=True)  # fix underflow
         p_vals.fillna(0.999999, inplace=True)
         slope = dml_results[ref_category][f"Est_Sample.Region{comp_category}"]
-        num_pos_sig = (
+        pos_sig = (
             (false_discovery_control(p_vals) < p_thres) & (slope >= 0.2)
-        ).sum()
-        num_neg_sig = (
+        ).values.ravel()
+        neg_sig = (
             (false_discovery_control(p_vals) < p_thres) & (slope <= -0.2)
-        ).sum()
-        num_diff_probes.loc[ref_category, comp_category] = num_pos_sig
-        num_diff_probes.loc[comp_category, ref_category] = num_neg_sig
+        ).values.ravel()
+        num_diff_probes.loc[ref_category, comp_category] = pos_sig.sum()
+        num_diff_probes.loc[comp_category, ref_category] = neg_sig.sum()
+        trends.iloc[pos_sig, [x == comp_category for x in trends.columns]] = "up"
+        trends.iloc[neg_sig, [x == comp_category for x in trends.columns]] = "down"
 
 num_diff_probes.to_csv(f"{din}/number_dml_probes_btwn_categories.csv")
+
+trends.dropna(axis=0, how="all", inplace=True)
+trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
+trends.fillna("n.d.", inplace=True)
+
+for ref_category, comp_category in [
+    ("Normal", "CUB"),
+    ("CUB", "OQ"),
+    ("OQ", "AN"),
+    ("AN", "TU"),
+]:
+    if ref_category == "Normal":
+        num_up = (trends[comp_category] == "up").sum()
+        num_down = (trends[comp_category] == "down").sum()
+        num_nd = (trends[comp_category] == "n.d.").sum()
+        print(f"       [ '{ref_category}', '{comp_category} - up', {num_up} ],")
+        print(f"       [ '{ref_category}', '{comp_category} - down', {num_down} ],")
+        print(f"       [ '{ref_category}', '{comp_category} - n.d.', {num_nd} ],")
+    else:
+        for reg1 in ["up", "down", "n.d."]:
+            for reg2 in ["up", "down", "n.d."]:
+                num = (
+                    (trends[ref_category] == reg1) & (trends[comp_category] == reg2)
+                ).sum()
+                print(
+                    f"       [ '{ref_category} - {reg1}', '{comp_category} - {reg2}', {num} ],"
+                )
 
 #############################################
 #### Get more information about segments ####
