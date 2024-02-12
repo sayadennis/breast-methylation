@@ -15,6 +15,7 @@ betas = pd.read_csv(
 )  # nrows=2000 for testing purposes
 meta = pd.read_csv(meta_fn)
 
+## Create mappings between IDAT IDs, tissue category, and integers
 idat_to_region = dict(zip(meta["IDAT"], meta["Sample Region"]))
 label_int_mapping = {"Normal": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
 int_label_mapping = {0: "Normal", 1: "CUB", 2: "OQ", 3: "AN", 4: "TU"}
@@ -26,11 +27,15 @@ int_color_mapping = {
     4: "orangered",
 }
 
+## Clean beta
 betas = betas[[col for col in betas.columns if col in meta["IDAT"].unique()]]
 betas.dropna(axis=0, inplace=True)  # drop columns that contain NA for PCA purposes
 betas = betas.iloc[[x.startswith("cg") for x in betas.index], :]
 
 int_labels = np.array([label_int_mapping[idat_to_region[x]] for x in betas.columns])
+
+# ## Take only the top 5000 most variable probes
+# betas = betas.iloc[betas.var(axis=1).argsort().tail(5000),:]
 
 print("Input data shape:", betas.T.shape)
 
