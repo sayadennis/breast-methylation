@@ -125,7 +125,8 @@ write.csv(
 
 # Remove samples with poor quality metrics (Dye bias >1.5 or <0.5)
 print("Finding samples with high distortion...")
-rm_sampleids <- rownames(qcs_raw_df[abs(qcs_raw_df$RGdistort - 1) > 0.5, ])
+rm_criteria <- qcs_raw_df$frac_dt < 0.9
+rm_sampleids <- rownames(qcs_raw_df[rm_criteria, ])
 print("Samples that will be removed:")
 print(rm_sampleids)
 writeLines(rm_sampleids, paste0(out_dir, "/exclude_IDATs.txt"))
