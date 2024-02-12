@@ -109,10 +109,10 @@ for ref_category, comp_category in [
         p_vals.fillna(0.999999, inplace=True)
         slope = dml_results[ref_category][f"Est_Sample.Region{comp_category}"]
         pos_sig = (
-            (false_discovery_control(p_vals) < p_thres) & (slope >= 0.2)
+            (false_discovery_control(p_vals) < p_thres) & (slope >= 0.001)
         ).values.ravel()
         neg_sig = (
-            (false_discovery_control(p_vals) < p_thres) & (slope <= -0.2)
+            (false_discovery_control(p_vals) < p_thres) & (slope <= -0.001)
         ).values.ravel()
         num_diff_probes.loc[ref_category, comp_category] = pos_sig.sum()
         num_diff_probes.loc[comp_category, ref_category] = neg_sig.sum()
