@@ -13,6 +13,7 @@ from scipy.stats import false_discovery_control
 ######################################
 
 din = "/projects/p30791/methylation/sesame_out/differential_methylation"
+dout = "/projects/p30791/methylation/sesame_out/differential_methylation"
 plot_dir = "/projects/p30791/methylation/plots"
 
 dml_results = {
@@ -39,12 +40,11 @@ for ref, _ in dml_results.items():
 
 p_thres = 0.01
 
-#########################
-#### Analyze results ####
-#########################
+############################################
+#### Upset Plot of number of DML probes ####
+############################################
 
-## Differentially methylated probes
-
+## Prepare data for Upset Plot
 dml_significance = {}
 upset_data = {}
 
@@ -85,14 +85,18 @@ for ref, _ in dml_results.items():
         dml_significance[ref].groupby(list(dml_significance[ref].columns)).size()
     )
 
-# Plot
+# Plot Upset
 for ref, _ in dml_results.items():
     upsetplot.plot(upset_data[ref], sort_categories_by="input")
     plt.title(f"Number of probes differentially methylated compared to {ref}")
     plt.savefig(f"{plot_dir}/upset_ref{ref}.png")
     plt.close()
 
-## Interpret the number of significantly different probes as "distances" between each category
+############################################################
+#### Count pairwise difference and prep for Sankey Plot ####
+############################################################
+
+## Count up- and down-methylated probes between adjacent tissue categories
 tissue_types.reverse()
 num_diff_probes = pd.DataFrame(0.0, index=tissue_types, columns=tissue_types)
 trends = pd.DataFrame(index=dml_results["Normal"].Probe_ID, columns=tissue_types)
@@ -109,10 +113,10 @@ for ref_category, comp_category in [
         p_vals.fillna(0.999999, inplace=True)
         slope = dml_results[ref_category][f"Est_Sample.Region{comp_category}"]
         pos_sig = (
-            (false_discovery_control(p_vals) < p_thres) & (slope >= 0.001)
+            (false_discovery_control(p_vals) < p_thres) & (slope >= 0.1)
         ).values.ravel()
         neg_sig = (
-            (false_discovery_control(p_vals) < p_thres) & (slope <= -0.001)
+            (false_discovery_control(p_vals) < p_thres) & (slope <= -0.1)
         ).values.ravel()
         num_diff_probes.loc[ref_category, comp_category] = pos_sig.sum()
         num_diff_probes.loc[comp_category, ref_category] = neg_sig.sum()
@@ -125,6 +129,10 @@ trends.dropna(axis=0, how="all", inplace=True)
 trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
 trends.fillna("n.d.", inplace=True)
 
+trends.to_csv(f"{din}/dml_up_down_pairwise_trends.csv")
+
+## Print statements for Sankey plots
+## https://developers.google.com/chart/interactive/docs/gallery/sankey
 for ref_category, comp_category in [
     ("Normal", "CUB"),
     ("CUB", "OQ"),
@@ -147,6 +155,33 @@ for ref_category, comp_category in [
                 print(
                     f"       [ '{ref_category} - {reg1}', '{comp_category} - {reg2}', {num} ],"
                 )
+
+# Save interesting probe sets to TXT file
+probe_sets = {
+    "CUB_down_from_Normal": list(trends.iloc[trends.CUB.values == "down"].index),
+    "CUB_up_from_Normal": list(trends.iloc[trends.CUB.values == "up"].index),
+    "AN_up_from_OQ": list(trends.iloc[trends.AN.values == "up"].index),
+    "AN_down_from_OQ": list(trends.iloc[trends.AN.values == "down"].index),
+    "AN_up_and_TU_down": list(
+        trends.iloc[(trends.AN.values == "up") & (trends.TU.values == "down")].index
+    ),
+    "AN_up_and_TU_nd_or_up": list(
+        trends.iloc[(trends.AN.values == "up") & (trends.TU.values != "down")].index
+    ),
+    "AN_down_and_TU_nd_or_down": list(
+        trends.iloc[(trends.AN.values == "down") & (trends.TU.values != "up")].index
+    ),
+    "AN_down_and_TU_up": list(
+        trends.iloc[(trends.AN.values == "down") & (trends.TU.values == "up")].index
+    ),
+    "TU_down_from_AN": list(trends.iloc[trends.TU.values == "down"].index),
+    "TU_up_from_AN": list(trends.iloc[trends.TU.values == "up"].index),
+}
+
+for key, probelist in probe_sets.items():
+    with open(f"{dout}/probe_set_{key}.txt", "w", encoding="utf-8") as f:
+        for item in probelist:
+            f.write(f"{item}\n")
 
 #############################################
 #### Get more information about segments ####
