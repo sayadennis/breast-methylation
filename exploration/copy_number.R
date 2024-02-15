@@ -32,9 +32,13 @@ for (i in seq_along(sdfs)) {
   idat_id <- names(sdfs)[[i]]
   tissue_category <- meta[meta$IDAT == idat_id, "Sample.Region"]
   cat("#### ", idat_id, "(", tissue_category, ") ####\n")
-  gg_plot <- visualizeSegments(segs) # , to.plot=paste0("chr", c(1:22)))
+  # TODO: Explore removing Y chromosome from this plot
+  gg_plot <- visualizeSegments(segs) +
+    ggtitle(paste0("CN Segments: ", idat_id, "(", tissue_category, ")"))
   ggsave(
-    filename = paste0(dout, "/cnv_segments_", idat_id, ".png"),
+    filename = paste0(
+      dout, "/cnv_segments_", tissue_category, "_", idat_id, ".png"
+    ),
     plot = gg_plot
   )
 }
