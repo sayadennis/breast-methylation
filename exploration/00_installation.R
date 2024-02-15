@@ -5,3 +5,4 @@ if (!require("BiocManager", quietly = TRUE)) {
 BiocManager::install("sesame")
 install.packages("pals")
 BiocManager::install("DNAcopy")
+install.packages("ggrepel")
