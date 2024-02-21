@@ -58,17 +58,18 @@ for (db_id in dbs$Title) {
 dbs_to_plot <- c(
   "chromHMM",
   "HMconsensus",
-  "metagene",
-  "seqContext",
+  # "seqContext",
   "TFBSconsensus"
 )
 
 for (setname in probeset_names) {
   print(paste0("Testing ", setname, "..."))
   query <- probe_sets[[setname]]
+
   # Test enrichment
   for (db_id in dbs$Title) {
     results <- testEnrichment(query, db_list[[db_id]], platform = "EPIC")
+
     # Select statistically significant results
     db_name <- strsplit(db_id, "\\.")[[1]][3]
     results <- results[results$p.value < 0.05, ]
@@ -76,6 +77,14 @@ for (setname in probeset_names) {
       # only save results if any are significant
       next
     }
+
+    # Fix rows where p-value and FDR-adjusted p-values suffer from underflow
+    min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
+    results$p.value[results$p.value == 0] <- min_nonzero_value
+
+    min_nonzero_value <- min(results$FDR[results$FDR > 0], na.rm = TRUE)
+    results$FDR[results$FDR == 0] <- min_nonzero_value
+
     file_path <- paste0(dout, "/testEnrichment_", setname, "_", db_name, ".csv")
     write.csv(results, file_path, row.names = FALSE)
     if (db_name %in% dbs_to_plot) {
@@ -101,47 +110,39 @@ for (setname in probeset_names) {
   }
 }
 
+########################################
+#### GO/Pathway Enrichment Analysis ####
+########################################
+
+regs <- sesameData_getTxnGRanges("hg38")
+
+source("sesameData_annoProbes_custom.R")
+
+library(gprofiler2)
+
+for (setname in probeset_names) {
+  print(paste0("Working on ", setname, "..."))
+  query <- probe_sets[[setname]]
+  genes <- sesameData_annoProbes_custom(
+    query, regs,
+    platform = "EPIC", return_ov_features = TRUE
+  )
+  gostres <- gost(
+    genes$gene_name,
+    organism = "hsapiens"
+  )
+  if (!is.null(gostres)) {
+    df <- gostres$result
+    df <- df[, !(names(df) %in% "parents")]
+    file_path <- paste0(dout, "/gost_result_", setname, ".csv")
+    write.csv(df[order(df$p_value), ], file_path, row.names = FALSE)
+  } else {
+    print(paste0("No GO/Pathway Enrichment results for", setname))
+  }
+}
+
 # nolint start: commented_code_linter.
 
-# ##################################
-# #### Gene Enrichment Analysis ####
-# ##################################
-#
-# genes <- c("BRCA1", "BRCA2", "TP53", "PTEN", "CDH1")
-#
-# for (gene in genes) {
-#   query <- names(sesameData_getProbesByGene(gene, platform="EPIC"))
-#   results <- testEnrichment(query,
-#       KYCG_buildGeneDBs(query, max_distance=100000, platform="EPIC"),
-#       platform="EPIC")
-#   # Plot results
-#   KYCG_plotLollipop(results, label="gene_name")
-# }
-#
-# ########################################
-# #### GO/Pathway Enrichment Analysis ####
-# ########################################
-#
-# regs <- sesameData_getTxnGRanges("hg38", merge2gene = TRUE)
-# genes <- sesameData_annoProbes(
-#     query, regs, platform="EPIC", return_ov_features=TRUE
-# )
-#
-# library(gprofiler2)
-#
-# ## use gene name
-# gostres <- gost(
-#     genes$gene_name, organism = "mmusculus")  # TODO: change to human
-# gostres$result[order(gostres$result$p_value),]
-# gostplot(gostres)
-#
-# ## use Ensembl gene ID, note we need to remove the version suffix
-# gene_ids <- sapply(strsplit(names(genes),"\\."), function(x) x[1])
-# gostres <- gost(gene_ids, organism = "mmusculus")
-# gostres$result[order(gostres$result$p_value),]
-# gostplot(gostres)
-#
-#
 # ###########################################################
 # #### Categorical vs Continuous Set Enrichment Analysis ####
 # ###########################################################

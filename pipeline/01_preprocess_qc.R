@@ -1,4 +1,5 @@
 library(sesame)
+library(ggplot2)
 
 ## As sesame and sesameData are under active development, this documentation is
 ## specific to the following version of R, sesame, sesameData and ExperimentHub:
@@ -32,13 +33,11 @@ print("Running openSesame() to obtain raw beta values...")
 betas_raw <- openSesame(
   idat_dir,
   func = getBetas,
-  BPPARAM = BiocParallel::MulticoreParam(8)
 )
 print("Successfully read raw betas! Now reading SDFs...")
 sdf_raw <- openSesame(
   idat_dir,
   func = NULL,
-  BPPARAM = BiocParallel::MulticoreParam(8)
 )
 print("Successfully read raw SDFs!")
 
@@ -66,14 +65,12 @@ betas_proc <- openSesame(
   idat_dir,
   prep = "QCDPB",
   func = getBetas,
-  BPPARAM = BiocParallel::MulticoreParam(8)
 )
 print("Successfully read processed betas! Now reading SDFs...")
 sdf_proc <- openSesame(
   idat_dir,
   prep = "QCDPB",
   func = NULL,
-  BPPARAM = BiocParallel::MulticoreParam(8)
 )
 print("Successfully read processed SDFs!")
 
@@ -94,13 +91,11 @@ qcs_raw <- openSesame(
   idat_dir,
   prep = "",
   func = sesameQC_calcStats,
-  BPPARAM = BiocParallel::MulticoreParam(8)
 )
 qcs_proc <- openSesame(
   idat_dir,
   prep = "QCDPB",
   func = sesameQC_calcStats,
-  BPPARAM = BiocParallel::MulticoreParam(8)
 )
 
 qcs_raw_df <- do.call(rbind, lapply(qcs_raw, as.data.frame))
@@ -146,3 +141,39 @@ write.csv(
 saveRDS(sdf_proc, file = paste0(out_dir, "/sdf_processed.RDS"))
 
 print(paste0("Wrote processed beta and SDF data to ", out_dir))
+
+## Plot metagene statistic
+
+KYCG_plotMeta_custom <- function(betas, platform = "EPIC", alpha = 0.2) {
+  if (!is.matrix(betas)) {
+    betas <- cbind(sample = betas)
+  }
+  stopifnot(!is.null(platform))
+
+  dbs <- KYCG_getDBs(sprintf("%s.metagene", platform))
+  df <- dbStats(betas, dbs, long = TRUE)
+  dflabel <- data.frame(
+    ord = as.integer(names(dbs)),
+    reg = vapply(dbs, function(x) attr(x, "label"), character(1))
+  )
+
+  ggplot(df) +
+    annotate("rect",
+      xmin = -1, xmax = 10, ymin = -Inf,
+      ymax = Inf, fill = "grey80", alpha = .5, color = NA
+    ) +
+    geom_line(aes_string("db", "value", group = "query", alpha = alpha)) +
+    scale_x_continuous(breaks = dflabel$ord, labels = dflabel$reg) +
+    ylab("Mean DNA Methylation Level") +
+    xlab("") +
+    theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1))
+}
+
+
+plotmeta <- KYCG_plotMeta_custom(
+  betas_proc,
+  platform = "EPIC",
+  alpha = 0.1
+) + ggtitle("Metagene Statistics of All Samples")
+file_path <- paste0(out_dir, "/plotmeta.png")
+ggsave(file_path, plot = plotmeta)

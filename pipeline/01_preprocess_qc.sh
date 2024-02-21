@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH -A p31931
 #SBATCH -p normal
-#SBATCH -t 8:00:00
+#SBATCH -t 48:00:00
 #SBATCH -N 1
 #SBATCH -n 8
 #SBATCH --mem=140G
