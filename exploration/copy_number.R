@@ -2,6 +2,8 @@ library(stringr)
 library(sesame)
 library(ggplot2)
 
+source("~/breast-methylation/exploration/cnv_custom.R")
+
 args <- commandArgs(trailingOnly = TRUE)
 
 if (length(args) != 3) {
@@ -33,8 +35,10 @@ for (i in seq_along(sdfs)) {
   tissue_category <- meta[meta$IDAT == idat_id, "Sample.Region"]
   cat("#### ", idat_id, "(", tissue_category, ") ####\n")
   # TODO: Explore removing Y chromosome from this plot
-  gg_plot <- visualizeSegments(segs) +
-    ggtitle(paste0("CN Segments: ", idat_id, "(", tissue_category, ")"))
+  gg_plot <- visualizeSegments(segs, to.plot = paste0("chr", c(1:22))) +
+    ggtitle(paste0("CN Segments: ", idat_id, "(", tissue_category, ")")) +
+    theme(legend.position = "none") +
+    ylim(-1.5, 1.1)
   ggsave(
     filename = paste0(
       dout, "/cnv_segments_", tissue_category, "_", idat_id, ".png"
