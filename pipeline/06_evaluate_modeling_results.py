@@ -25,6 +25,7 @@ dml_results = {
 }
 
 tissue_types = ["TU", "AN", "OQ", "CUB", "Normal"]
+p_thres = 0.01
 
 dmr_results = {}
 for ref, _ in dml_results.items():
@@ -37,8 +38,6 @@ for ref, _ in dml_results.items():
             dmr_results[ref][comparison] = pd.read_csv(
                 f"{din}/DMR_results_Sample.Region{comparison}_ref{ref}.csv"
             )
-
-p_thres = 0.01
 
 ############################################
 #### Upset Plot of number of DML probes ####
@@ -96,10 +95,15 @@ for ref, _ in dml_results.items():
 #### Count pairwise difference and prep for Sankey Plot ####
 ############################################################
 
+effect_thres = 0.2
+
 ## Count up- and down-methylated probes between adjacent tissue categories
 tissue_types.reverse()
 num_diff_probes = pd.DataFrame(0.0, index=tissue_types, columns=tissue_types)
-trends = pd.DataFrame(index=dml_results["Normal"].Probe_ID, columns=tissue_types)
+trends = pd.DataFrame(
+    index=dml_results["Normal"].Probe_ID,
+    columns=["All probes", "Normal vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"],
+)
 
 for ref_category, comp_category in [
     ("Normal", "CUB"),
@@ -107,21 +111,31 @@ for ref_category, comp_category in [
     ("OQ", "AN"),
     ("AN", "TU"),
 ]:
-    if f"Pval_Sample.Region{comp_category}" in dml_results[ref_category].columns:
-        p_vals = dml_results[ref_category][f"Pval_Sample.Region{comp_category}"]
-        p_vals.replace(0, 1e-320, inplace=True)  # fix underflow
-        p_vals.fillna(0.999999, inplace=True)
-        slope = dml_results[ref_category][f"Est_Sample.Region{comp_category}"]
-        pos_sig = (
-            (false_discovery_control(p_vals) < p_thres) & (slope >= 0.1)
-        ).values.ravel()
-        neg_sig = (
-            (false_discovery_control(p_vals) < p_thres) & (slope <= -0.1)
-        ).values.ravel()
-        num_diff_probes.loc[ref_category, comp_category] = pos_sig.sum()
-        num_diff_probes.loc[comp_category, ref_category] = neg_sig.sum()
-        trends.iloc[pos_sig, [x == comp_category for x in trends.columns]] = "up"
-        trends.iloc[neg_sig, [x == comp_category for x in trends.columns]] = "down"
+    p_vals = dml_results[ref_category][f"Pval_Sample.Region{comp_category}"]
+    p_vals.index = dml_results[ref_category].Probe_ID
+    # fix underflow (p=0) by replacing zero with non-zero minimum
+    p_nonzero_min = np.min(p_vals.iloc[p_vals.values != 0])
+    p_vals.replace(0, p_nonzero_min, inplace=True)
+    # replace p=NaN with non-significant p
+    p_vals.fillna(0.999999, inplace=True)
+    # obtain slope to decipher trend
+    slope = dml_results[ref_category][f"Est_Sample.Region{comp_category}"]
+    slope.index = dml_results[ref_category].Probe_ID
+    # find hypermethylated probes
+    pos_sig = (false_discovery_control(p_vals) < p_thres) & (slope >= effect_thres)
+    # find hypomethylated probes
+    neg_sig = (false_discovery_control(p_vals) < p_thres) & (
+        slope <= (-1) * effect_thres
+    )
+    # record information
+    num_diff_probes.loc[ref_category, comp_category] = pos_sig.sum()
+    num_diff_probes.loc[comp_category, ref_category] = neg_sig.sum()
+    trends.loc[
+        pos_sig.iloc[pos_sig.values].index, f"{ref_category} vs {comp_category}"
+    ] = "up"
+    trends.loc[
+        neg_sig.iloc[neg_sig.values].index, f"{ref_category} vs {comp_category}"
+    ] = "down"
 
 num_diff_probes.to_csv(f"{din}/number_dml_probes_btwn_categories.csv")
 
@@ -133,27 +147,27 @@ trends.to_csv(f"{din}/dml_up_down_pairwise_trends.csv")
 
 ## Print statements for Sankey plots
 ## https://developers.google.com/chart/interactive/docs/gallery/sankey
-for ref_category, comp_category in [
-    ("Normal", "CUB"),
-    ("CUB", "OQ"),
-    ("OQ", "AN"),
-    ("AN", "TU"),
+for current_node, next_node in [
+    ("All probes", "Normal vs CUB"),
+    ("Normal vs CUB", "CUB vs OQ"),
+    ("CUB vs OQ", "OQ vs AN"),
+    ("OQ vs AN", "AN vs TU"),
 ]:
-    if ref_category == "Normal":
-        num_up = (trends[comp_category] == "up").sum()
-        num_down = (trends[comp_category] == "down").sum()
-        num_nd = (trends[comp_category] == "n.d.").sum()
-        print(f"       [ '{ref_category}', '{comp_category} - up', {num_up} ],")
-        print(f"       [ '{ref_category}', '{comp_category} - down', {num_down} ],")
-        print(f"       [ '{ref_category}', '{comp_category} - n.d.', {num_nd} ],")
+    if current_node == "All probes":
+        num_up = (trends[next_node] == "up").sum()
+        num_down = (trends[next_node] == "down").sum()
+        num_nd = (trends[next_node] == "n.d.").sum()
+        print(f"       [ '{current_node}', '{next_node} - up', {num_up} ],")
+        print(f"       [ '{current_node}', '{next_node} - down', {num_down} ],")
+        print(f"       [ '{current_node}', '{next_node} - n.d.', {num_nd} ],")
     else:
         for reg1 in ["up", "down", "n.d."]:
             for reg2 in ["up", "down", "n.d."]:
                 num = (
-                    (trends[ref_category] == reg1) & (trends[comp_category] == reg2)
+                    (trends[current_node] == reg1) & (trends[next_node] == reg2)
                 ).sum()
                 print(
-                    f"       [ '{ref_category} - {reg1}', '{comp_category} - {reg2}', {num} ],"
+                    f"       [ '{current_node} - {reg1}', '{next_node} - {reg2}', {num} ],"
                 )
 
 # Save interesting probe sets to TXT file
