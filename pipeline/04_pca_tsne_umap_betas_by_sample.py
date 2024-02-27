@@ -216,7 +216,7 @@ for feature_name, categories in tumormeta_to_plot.items():
                 background_samples[method][0],
                 background_samples[method][1],
                 c="k",
-                alpha=0.3,
+                alpha=0.1,
                 s=10,
                 label=None,
             )

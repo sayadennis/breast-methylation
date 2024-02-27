@@ -15,7 +15,7 @@ module load python-miniconda3/4.12.0
 
 source activate methylation
 
-cd ~/breast-methylation/exploration/
+cd ~/breast-methylation/pipeline/
 
-python pca_tsne_umap_betas_by_sample.py
+python 04_pca_tsne_umap_betas_by_sample.py
 
