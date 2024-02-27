@@ -115,5 +115,6 @@ ggsave(
   plot = arranged_plot,
   width = sum(widths) * 2,
   height = (sum(heights) + 2) * 2,
-  units = "cm"
+  units = "cm",
+  limitsize = FALSE,
 )
