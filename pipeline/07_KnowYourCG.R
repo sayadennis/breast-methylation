@@ -24,6 +24,9 @@ if (!file.exists(dout)) {
 
 ## Read the query probe sets
 probeset_names <- c(
+  "hypo_in_TU_HER2",
+  "hypo_in_TU_ER",
+  "hyper_in_TU_ER",
   "CUB_down_from_Normal",
   "CUB_up_from_Normal",
   "AN_up_from_OQ",

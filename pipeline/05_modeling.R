@@ -5,6 +5,7 @@ library(tidyr)
 library(ggplot2)
 
 plotdir <- "/projects/p30791/methylation/plots"
+dout <- "/projects/p30791/methylation/sesame_out/differential_methylation"
 
 ############################
 #### Load and prep data ####
@@ -18,37 +19,42 @@ betas <- read.table(
 meta <- read.csv("/projects/p30791/methylation/data/meta.csv")
 
 betas <- as.matrix(betas)
-
-## Exclude probes that are missing levels on sample region etc.
-cpg_ok <- checkLevels(betas, meta$Sample.Region)
-print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
-
-betas <- betas[cpg_ok, ]
 meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 
-###########################################
-#### Differential methylation analysis ####
-###########################################
+##############################################################
+#### Differential methylation analysis by tissue category ####
+##############################################################
 
-for (reference in c("Normal", "CUB", "OQ", "AN", "TU")) {
-  ## Change metadata into factors
-  meta$Sample.Region <- relevel(factor(meta$Sample.Region), reference)
+refs <- c("Normal", "CUB", "OQ", "AN")
+comps <- c("CUB", "OQ", "AN", "TU")
+
+for (i in seq_along(refs)) {
+  ref <- refs[i]
+  comp <- comps[i]
+
+  ## Subset the betas and metadata
+  meta_sub <- meta[meta$Sample.Region %in% c(ref, comp), ]
+  meta_sub$Sample.Region <- relevel(factor(meta_sub$Sample.Region), ref)
+  betas_sub <- betas[, paste0("X", meta_sub$IDAT)]
+
+  ## Exclude probes that are missing levels on sample region etc.
+  cpg_ok <- checkLevels(betas_sub, meta$Sample.Region)
+  print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
+  betas_sub <- betas_sub[cpg_ok, ]
 
   ## Differential methylation analysis
-  smry <- DML(betas, ~ Sample.Region + Age, meta = meta) # cant control for BMI
+  smry <- DML(betas_sub, ~ Sample.Region + Age, meta = meta_sub) # cant control for BMI
   saveRDS(
     smry,
     paste0(
-      "/projects/p30791/methylation/sesame_out/model_summary_ref",
-      reference, ".RDS"
+      dout, "/model_summary_ref", ref, "_comp", comp, ".RDS"
     )
   )
   test_result <- summaryExtractTest(smry)
   write.csv(
     test_result,
     paste0(
-      "/projects/p30791/methylation/sesame_out/DML_results_ref",
-      reference, ".csv"
+      dout, "/DML_results_ref", ref, "_comp", comp, ".csv"
     ),
     quote = FALSE, row.names = FALSE
   )
@@ -56,12 +62,11 @@ for (reference in c("Normal", "CUB", "OQ", "AN", "TU")) {
   ## DMR (Differentially methylated regions)
   for (contrast in dmContrasts(smry)) {
     # merge probes to regions
-    merged <- DMR(betas, smry, contrast, platform = "EPIC")
+    merged <- DMR(betas_sub, smry, contrast, platform = "EPIC")
     write.csv(
       merged,
       paste0(
-        "/projects/p30791/methylation/sesame_out/DMR_results_",
-        contrast, "_ref", reference, ".csv"
+        dout, "/DMR_results_", contrast, "_ref", ref, ".csv"
       ),
       quote = FALSE, row.names = FALSE
     )
@@ -77,3 +82,59 @@ ggplot(df, aes(Age, BetaValue)) +
   geom_smooth(method = "lm") +
   geom_point()
 ggsave(paste0(plotdir, "/age_vs_betas.png"))
+
+#############################################################
+#### Differential methylation analysis by tumor metadata ####
+#############################################################
+
+comps <- c("CUB", "OQ", "AN", "TU")
+
+meta_cases <- meta[meta$Case.Control == "case", ]
+betas_cases <- betas[, paste0("X", meta_cases$IDAT)]
+
+# Create useful metadata columns
+meta_cases$HER2 <- relevel(
+  factor(
+    ifelse(
+      meta_cases$HER2 %in% c(2, 3),
+      "Positive", "Negative"
+    )
+  ), "Negative"
+)
+meta_cases$ER <- relevel(
+  factor(
+    ifelse(
+      meta_cases$ER == "+",
+      "Positive", "Negative"
+    )
+  ), "Negative"
+)
+
+for (tissue_category in comps) {
+  print(paste0("Running analysis for ", tissue_category, "..."))
+  # Subset the betas and metadata
+  meta_sub <- meta_cases[meta_cases$Sample.Region == tissue_category, ]
+  betas_sub <- betas_cases[, paste0("X", meta_sub$IDAT)]
+
+  for (contrast_feature in c("ER", "HER2")) {
+    print(paste0("Running ", contrast_feature, "..."))
+    # Exclude probes that are missing levels on sample region etc.
+    cpg_ok <- checkLevels(betas_sub, meta_sub[[contrast_feature]])
+    print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
+    betas_sub_cpgfilter <- betas_sub[cpg_ok, ]
+    # Create formula string with contrast feature to plug into DML
+    formula_string <- paste("~", contrast_feature, "+ Age")
+    formula_expression <- as.formula(formula_string)
+    # Run DML
+    smry <- DML(betas_sub_cpgfilter, formula_expression, meta = meta_sub)
+    test_result <- summaryExtractTest(smry)
+    # Save results
+    write.csv(
+      test_result,
+      paste0(
+        dout, "/DML_results_of_", tissue_category, "_by_", contrast_feature, ".csv"
+      ),
+      quote = FALSE, row.names = FALSE
+    )
+  }
+}

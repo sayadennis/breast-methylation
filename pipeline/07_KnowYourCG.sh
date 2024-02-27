@@ -13,9 +13,9 @@
 module purge all 
 module load R/4.3.0
 
-cd ~/breast-methylation/exploration/
+cd ~/breast-methylation/pipeline/
 
 mkdir -p /projects/p30791/methylation/sesame_out/KYCG/
 mkdir -p /projects/p30791/methylation/plots/KYCG
-Rscript --vanilla KnowYourCG.R "/projects/p30791/methylation/sesame_out/differential_methylation" "/projects/p30791/methylation/sesame_out/KYCG" "/projects/p30791/methylation/plots/KYCG"
+Rscript --vanilla 07_KnowYourCG.R "/projects/p30791/methylation/sesame_out/differential_methylation" "/projects/p30791/methylation/sesame_out/KYCG" "/projects/p30791/methylation/plots/KYCG"
 

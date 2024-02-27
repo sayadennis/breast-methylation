@@ -3,10 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-import upsetplot
 from scipy.stats import false_discovery_control
-
-# from upsetplot import UpSet
 
 ######################################
 #### Load SeSAMe modeling results ####
@@ -26,6 +23,7 @@ dml_results = {
 
 tissue_types = ["TU", "AN", "OQ", "CUB", "Normal"]
 p_thres = 0.01
+effect_thres = 0.2
 
 dmr_results = {}
 for ref, _ in dml_results.items():
@@ -39,63 +37,9 @@ for ref, _ in dml_results.items():
                 f"{din}/DMR_results_Sample.Region{comparison}_ref{ref}.csv"
             )
 
-############################################
-#### Upset Plot of number of DML probes ####
-############################################
-
-## Prepare data for Upset Plot
-dml_significance = {}
-upset_data = {}
-
-for ref, _ in dml_results.items():
-    comparison_columns = (
-        dml_results[ref]
-        .columns[
-            [
-                colname.startswith("Est_Sample.Region")
-                for colname in dml_results[ref].columns
-            ]
-        ]
-        .tolist()
-    )  # elements of this list are like 'Est_Sample.RegionAN'
-    comparisons = [
-        x[len("Est_Sample.Region") :] for x in comparison_columns
-    ]  # elements of this list are like 'AN'
-    dml_significance[ref] = pd.DataFrame(
-        index=dml_results[ref].Probe_ID, columns=comparisons
-    )
-    for tissue_type in comparisons:
-        # Record significance WITH FDR CORRECTION
-        p_vals = dml_results[ref][f"Pval_Sample.Region{tissue_type}"]
-        p_vals.replace(0, 1e-320, inplace=True)  # fix underflow
-        p_vals.fillna(0.999999, inplace=True)
-        dml_significance[ref][tissue_type] = false_discovery_control(p_vals) < p_thres
-    dml_significance[ref].rename(
-        {
-            "TU": "Tumor",
-            "AN": "Adjacent normal",
-            "OQ": "Opposite quadrant",
-            "CUB": "Contralateral",
-        },
-        axis=1,
-        inplace=True,
-    )
-    upset_data[ref] = (
-        dml_significance[ref].groupby(list(dml_significance[ref].columns)).size()
-    )
-
-# Plot Upset
-for ref, _ in dml_results.items():
-    upsetplot.plot(upset_data[ref], sort_categories_by="input")
-    plt.title(f"Number of probes differentially methylated compared to {ref}")
-    plt.savefig(f"{plot_dir}/upset_ref{ref}.png")
-    plt.close()
-
 ############################################################
 #### Count pairwise difference and prep for Sankey Plot ####
 ############################################################
-
-effect_thres = 0.2
 
 ## Count up- and down-methylated probes between adjacent tissue categories
 tissue_types.reverse()
@@ -196,6 +140,49 @@ for key, probelist in probe_sets.items():
     with open(f"{dout}/probe_set_{key}.txt", "w", encoding="utf-8") as f:
         for item in probelist:
             f.write(f"{item}\n")
+
+##########################################
+#### Analyze DML results by biomarker ####
+##########################################
+
+for tissue_category in ["CUB", "OQ", "AN", "TU"]:
+    for biomarker in ["ER", "HER2"]:
+        dml = pd.read_csv(f"{din}/DML_results_of_{tissue_category}_by_{biomarker}.csv")
+        dml = dml.iloc[[x.startswith("cg") for x in dml.Probe_ID], :]
+        # obtain slope and p-values
+        slope = dml[f"Est_{biomarker}Positive"]
+        slope.index = dml.Probe_ID
+        p_vals = dml[f"Pval_{biomarker}Positive"]
+        p_vals.index = dml.Probe_ID
+        # fix underflow (p=0) by replacing zero with non-zero minimum
+        p_nonzero_min = np.min(p_vals.iloc[p_vals.values != 0])
+        p_vals.replace(0, p_nonzero_min, inplace=True)
+        # replace p=NaN with non-significant p
+        p_vals.fillna(0.999999, inplace=True)
+        # find hypermethylated probes
+        pos_sig = (false_discovery_control(p_vals) < p_thres) & (slope >= effect_thres)
+        pos_sig_probes = list(pos_sig.iloc[pos_sig.values].index)
+        # find hypomethylated probes
+        neg_sig = (false_discovery_control(p_vals) < p_thres) & (
+            slope <= (-1) * effect_thres
+        )
+        neg_sig_probes = list(neg_sig.iloc[neg_sig.values].index)
+        if len(pos_sig_probes) > 0:
+            with open(
+                f"{dout}/probe_set_hyper_in_{tissue_category}_{biomarker}.txt",
+                "w",
+                encoding="utf-8",
+            ) as f:
+                for item in pos_sig_probes:
+                    f.write(f"{item}\n")
+        if len(neg_sig_probes) > 0:
+            with open(
+                f"{dout}/probe_set_hypo_in_{tissue_category}_{biomarker}.txt",
+                "w",
+                encoding="utf-8",
+            ) as f:
+                for item in neg_sig_probes:
+                    f.write(f"{item}\n")
 
 #############################################
 #### Get more information about segments ####
