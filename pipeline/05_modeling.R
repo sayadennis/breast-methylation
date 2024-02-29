@@ -38,7 +38,7 @@ for (i in seq_along(refs)) {
   betas_sub <- betas[, paste0("X", meta_sub$IDAT)]
 
   ## Exclude probes that are missing levels on sample region etc.
-  cpg_ok <- checkLevels(betas_sub, meta$Sample.Region)
+  cpg_ok <- checkLevels(betas_sub, meta_sub$Sample.Region)
   print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
   betas_sub <- betas_sub[cpg_ok, ]
 
@@ -73,15 +73,17 @@ for (i in seq_along(refs)) {
   }
 }
 
-df <- data.frame(
-  Age = meta$Age,
-  BetaValue = betas[test_result$Probe_ID[nrow(test_result)], ]
-)
-
-ggplot(df, aes(Age, BetaValue)) +
-  geom_smooth(method = "lm") +
-  geom_point()
-ggsave(paste0(plotdir, "/age_vs_betas.png"))
+# nolint start
+# df <- data.frame(
+#   Age = meta$Age,
+#   BetaValue = betas[test_result$Probe_ID[nrow(test_result)], ]
+# )
+#
+# ggplot(df, aes(Age, BetaValue)) +
+#   geom_smooth(method = "lm") +
+#   geom_point()
+# ggsave(paste0(plotdir, "/age_vs_betas.png"))
+# nolint end
 
 #############################################################
 #### Differential methylation analysis by tumor metadata ####

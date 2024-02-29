@@ -69,7 +69,7 @@ for (setname in probeset_names) {
   print(paste0("Testing ", setname, "..."))
   query <- probe_sets[[setname]]
 
-  # Test enrichment
+  # Test enrichment for public databases
   for (db_id in dbs$Title) {
     results <- testEnrichment(query, db_list[[db_id]], platform = "EPIC")
 
@@ -110,6 +110,25 @@ for (setname in probeset_names) {
       }
       ggsave(plot_filepath, plot = dotplot, width = 6, height = height)
     }
+  }
+
+  # Test enrichment for genes
+  results <- testEnrichment(
+    query,
+    KYCG_buildGeneDBs(query, max_distance = 100000, platform = "EPIC"),
+    platform = "EPIC"
+  )
+  results <- results[results$p.value < 0.05, ]
+  if (dim(results)[1] > 0) {
+    # Fix rows where p-value and FDR-adjusted p-values suffer from underflow
+    min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
+    results$p.value[results$p.value == 0] <- min_nonzero_value
+
+    min_nonzero_value <- min(results$FDR[results$FDR > 0], na.rm = TRUE)
+    results$FDR[results$FDR == 0] <- min_nonzero_value
+
+    file_path <- paste0(dout, "/testEnrichment_", setname, "_genes.csv")
+    write.csv(results, file_path, row.names = FALSE)
   }
 }
 
