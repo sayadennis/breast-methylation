@@ -20,6 +20,16 @@ with open(f"{din}/exclude_IDATs.txt", "r", encoding="utf-8") as f:
 
 meta = meta.iloc[[x not in exclude_idats for x in meta.IDAT]]
 
+# Re-code HER2 status so it's Positive/Negative
+meta.loc[:, "HER2"] = meta["HER2"].map(
+    {
+        0: "Negative",
+        1: "Negative",
+        2: "Negative",
+        3: "Positive",
+    }
+)
+
 ## Create mappings between IDAT IDs, tissue category, and integers
 idat_to_region = dict(zip(meta["IDAT"], meta["Sample Region"]))
 label_int_mapping = {"Normal": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
@@ -140,9 +150,9 @@ plt.tight_layout()
 fig.savefig(f"{dout}/clustering_by_sample_betas.png")
 plt.close()
 
-###############################################
-#### Plot by tumor metadata (experimental) ####
-###############################################
+################################
+#### Plot by tumor metadata ####
+################################
 
 # Only select cancer patients
 idat_cases = list(meta.iloc[meta["Sample Region"].values != "Normal", :].IDAT)
@@ -162,7 +172,7 @@ tumormeta_to_plot = {
     "Grade": ["I", "II", "III"],
     "ER": ["+", "-"],
     "PgR": ["+", "-"],
-    "HER2": [0, 1, 2, 3],
+    "HER2": ["Positive", "Negative"],
 }
 
 # Run PCA only on cases

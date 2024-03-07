@@ -6,20 +6,36 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
-meta_fn = sys.argv[
-    1
-]  # metadata file path e.g. "/projects/p30791/methylation/data/meta.csv"
-out_dir = sys.argv[2]  # e.g. "/projects/p30791/methylation/data_summary"
+meta_fn = sys.argv[1]  # e.g. "/projects/p30791/methylation/data/meta.csv"
+summary_dir = sys.argv[2]  # e.g. "/projects/p30791/methylation/data_summary"
+sesame_dir = sys.argv[3]  # e.g. "/projects/p30791/methylation/sesame_out"
 meta = pd.read_csv(meta_fn, index_col=0)
 
-if not os.path.exists(out_dir):
-    os.makedirs(out_dir)
-    print(f"Created output directory: {out_dir}")
+if not os.path.exists(summary_dir):
+    os.makedirs(summary_dir)
+    print(f"Created output directory: {summary_dir}")
 
 # Summarize mapping of how many samples per patient
 n_cases = len(meta.iloc[meta["Case/Control"].values == "case", :]["ID"].unique())
 n_controls = len(meta.iloc[meta["Case/Control"].values == "normal", :]["ID"].unique())
-print(f"Number of cases: {n_cases} // controls: {n_controls}")
+print(f"Initial number of cases: {n_cases} // controls: {n_controls}")
+
+###################################################
+#### Alleviate age differences in case/control ####
+###################################################
+
+# Identify the 10 youngest women among cancer-free normals
+cfn = meta.iloc[meta["Case/Control"].values == "normal", :]
+youngest10 = cfn.iloc[np.argsort(cfn["Age"]).values[:10], :].ID.values.ravel()
+
+exclude_idat = meta.iloc[[patient_id in youngest10 for patient_id in meta.ID], :].index
+
+with open(f"{sesame_dir}/exclude_IDATs.txt", "w", encoding="utf-8") as f:
+    for item in exclude_idat:
+        f.write(f"{item}\n")
+
+# Remove these samples from meta dataframe
+meta = meta.iloc[[idat_id not in exclude_idat for idat_id in meta.index], :]
 
 ###########################################################
 #### Distribution of race across case/control category ####
@@ -47,7 +63,7 @@ tablestring = tabulate(
 )
 print(tablestring)
 
-cts_pcts.to_csv(f"{out_dir}/crosstab_casecontrol_race.csv")
+cts_pcts.to_csv(f"{summary_dir}/crosstab_casecontrol_race.csv")
 
 ########################################################
 #### Tumor characteristics of cases (Plot & Tables) ####
@@ -310,7 +326,7 @@ axs[3].set_title("HER2 Status", fontsize=14)
 tables["HER2"] = add_pcts(cts)
 
 plt.tight_layout()
-fig.savefig(f"{out_dir}/tumor_characteristics.png")
+fig.savefig(f"{summary_dir}/tumor_characteristics.png")
 plt.close()
 
 for name, df in tables.items():
@@ -384,5 +400,5 @@ fig.suptitle("Distributions of Age and BMI", fontsize=16)
 
 plt.tight_layout()
 plt.subplots_adjust(left=0.12)
-fig.savefig(f"{out_dir}/histograms_age_bmi.png")
+fig.savefig(f"{summary_dir}/histograms_age_bmi.png")
 plt.close()
