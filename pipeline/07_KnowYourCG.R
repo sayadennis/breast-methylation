@@ -32,11 +32,30 @@ probeset_names <- c(
   "AN_up_from_OQ",
   "AN_down_from_OQ",
   "AN_up_and_TU_down",
-  "AN_up_and_TU_nd_or_up",
-  "AN_down_and_TU_nd_or_down",
   "AN_down_and_TU_up",
   "TU_down_from_AN",
-  "TU_up_from_AN"
+  "TU_up_from_AN",
+  "Monotonic_increase_A",
+  "Monotonic_increase_B",
+  "Monotonic_increase_C",
+  "Monotonic_increase_D",
+  "Monotonic_increase_E",
+  "Monotonic_decrease_A",
+  "Monotonic_decrease_B",
+  "Monotonic_decrease_C",
+  "Monotonic_decrease_D",
+  "Monotonic_decrease_E",
+  "Non_monotonic_valley_A",
+  "Non_monotonic_valley_B",
+  "Non_monotonic_valley_C",
+  "Non_monotonic_valley_D",
+  "Non_monotonic_valley_E",
+  "Non_monotonic_hill_A",
+  "Non_monotonic_hill_B",
+  "Non_monotonic_hill_C",
+  "Non_monotonic_hill_D",
+  "Non_monotomic_mixed_A",
+  "Non_monotomic_mixed_B"
 )
 
 probe_sets <- list()
@@ -58,10 +77,12 @@ for (db_id in dbs$Title) {
 #### Categorical vs Categorical Enrichment Analysis ####
 ########################################################
 
+fold_enrichment_thres <- 1.05
+
 dbs_to_plot <- c(
   "chromHMM",
   "HMconsensus",
-  # "seqContext",
+  "seqContext",
   "TFBSconsensus"
 )
 
@@ -75,7 +96,11 @@ for (setname in probeset_names) {
 
     # Select statistically significant results
     db_name <- strsplit(db_id, "\\.")[[1]][3]
+    # Apply p-value threshold
     results <- results[results$p.value < 0.05, ]
+    # For ease of interpretation, we are only keeping enrichment and discarding depletion
+    results <- results[results$estimate > fold_enrichment_thres, ]
+
     if (dim(results)[1] == 0) {
       # only save results if any are significant
       next
@@ -119,6 +144,8 @@ for (setname in probeset_names) {
     platform = "EPIC"
   )
   results <- results[results$p.value < 0.05, ]
+  results <- results[results$estimate > fold_enrichment_thres, ]
+
   if (dim(results)[1] > 0) {
     # Fix rows where p-value and FDR-adjusted p-values suffer from underflow
     min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
@@ -132,38 +159,38 @@ for (setname in probeset_names) {
   }
 }
 
-########################################
-#### GO/Pathway Enrichment Analysis ####
-########################################
-
-regs <- sesameData_getTxnGRanges("hg38")
-
-source("sesameData_annoProbes_custom.R")
-
-library(gprofiler2)
-
-for (setname in probeset_names) {
-  print(paste0("Working on ", setname, "..."))
-  query <- probe_sets[[setname]]
-  genes <- sesameData_annoProbes_custom(
-    query, regs,
-    platform = "EPIC", return_ov_features = TRUE
-  )
-  gostres <- gost(
-    genes$gene_name,
-    organism = "hsapiens"
-  )
-  if (!is.null(gostres)) {
-    df <- gostres$result
-    df <- df[, !(names(df) %in% "parents")]
-    file_path <- paste0(dout, "/gost_result_", setname, ".csv")
-    write.csv(df[order(df$p_value), ], file_path, row.names = FALSE)
-  } else {
-    print(paste0("No GO/Pathway Enrichment results for", setname))
-  }
-}
-
 # nolint start: commented_code_linter.
+
+# ########################################
+# #### GO/Pathway Enrichment Analysis ####
+# ########################################
+#
+# regs <- sesameData_getTxnGRanges("hg38")
+#
+# source("sesameData_annoProbes_custom.R")
+#
+# library(gprofiler2)
+#
+# for (setname in probeset_names) {
+#   print(paste0("Working on ", setname, "..."))
+#   query <- probe_sets[[setname]]
+#   genes <- sesameData_annoProbes_custom(
+#     query, regs,
+#     platform = "EPIC", return_ov_features = TRUE
+#   )
+#   gostres <- gost(
+#     genes$gene_name,
+#     organism = "hsapiens"
+#   )
+#   if (!is.null(gostres)) {
+#     df <- gostres$result
+#     df <- df[, !(names(df) %in% "parents")]
+#     file_path <- paste0(dout, "/gost_result_", setname, ".csv")
+#     write.csv(df[order(df$p_value), ], file_path, row.names = FALSE)
+#   } else {
+#     print(paste0("No GO/Pathway Enrichment results for", setname))
+#   }
+# }
 
 # ###########################################################
 # #### Categorical vs Continuous Set Enrichment Analysis ####

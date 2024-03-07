@@ -1,4 +1,4 @@
-import os
+import re
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -13,58 +13,56 @@ din = "/projects/p30791/methylation/sesame_out/differential_methylation"
 dout = "/projects/p30791/methylation/sesame_out/differential_methylation"
 plot_dir = "/projects/p30791/methylation/plots"
 
-dml_results = {
-    "Normal": pd.read_csv(f"{din}/DML_results_refNormal.csv"),
-    "CUB": pd.read_csv(f"{din}/DML_results_refCUB.csv"),
-    "OQ": pd.read_csv(f"{din}/DML_results_refOQ.csv"),
-    "AN": pd.read_csv(f"{din}/DML_results_refAN.csv"),
-    "TU": pd.read_csv(f"{din}/DML_results_refTU.csv"),
-}
+ref_comp_pairs = [
+    ("Normal", "CUB"),
+    ("CUB", "OQ"),
+    ("OQ", "AN"),
+    ("AN", "TU"),
+]
 
-tissue_types = ["TU", "AN", "OQ", "CUB", "Normal"]
+dml_results, dmr_results = {}, {}
+for ref, comp in ref_comp_pairs:
+    # DML results
+    dml_results[f"{ref} vs {comp}"] = pd.read_csv(
+        f"{din}/DML_results_ref{ref}_comp{comp}.csv"
+    )
+    # DMR results
+    dmr_results[f"{ref} vs {comp}"] = pd.read_csv(
+        f"{din}/DMR_results_Sample.Region{comp}_ref{ref}.csv"
+    )
+
+tissue_types = ["Normal", "CUB", "OQ", "AN", "TU"]
 p_thres = 0.01
-effect_thres = 0.2
-
-dmr_results = {}
-for ref, _ in dml_results.items():
-    dmr_results[ref] = {}
-    # Add results for age
-    dmr_results[ref]["Age"] = pd.read_csv(f"{din}/DMR_results_Age_ref{ref}.csv")
-    # Add results for tissue regions
-    for comparison in tissue_types:
-        if os.path.exists(f"{din}/DMR_results_Sample.Region{comparison}_ref{ref}.csv"):
-            dmr_results[ref][comparison] = pd.read_csv(
-                f"{din}/DMR_results_Sample.Region{comparison}_ref{ref}.csv"
-            )
+effect_thres = 0.1
 
 ############################################################
 #### Count pairwise difference and prep for Sankey Plot ####
 ############################################################
 
 ## Count up- and down-methylated probes between adjacent tissue categories
-tissue_types.reverse()
-num_diff_probes = pd.DataFrame(0.0, index=tissue_types, columns=tissue_types)
+num_diff_probes = pd.DataFrame(
+    0.0,
+    index=[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs],
+    columns=["Higher", "Lower"],
+)
 trends = pd.DataFrame(
-    index=dml_results["Normal"].Probe_ID,
-    columns=["All probes", "Normal vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"],
+    index=list(
+        set().union(*(df["Probe_ID"] for df in dml_results.values()))
+    ),  # all probes
+    columns=["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs],
 )
 
-for ref_category, comp_category in [
-    ("Normal", "CUB"),
-    ("CUB", "OQ"),
-    ("OQ", "AN"),
-    ("AN", "TU"),
-]:
-    p_vals = dml_results[ref_category][f"Pval_Sample.Region{comp_category}"]
-    p_vals.index = dml_results[ref_category].Probe_ID
+for ref, comp in ref_comp_pairs:
+    p_vals = dml_results[f"{ref} vs {comp}"][f"Pval_Sample.Region{comp}"]
+    p_vals.index = dml_results[f"{ref} vs {comp}"].Probe_ID
     # fix underflow (p=0) by replacing zero with non-zero minimum
     p_nonzero_min = np.min(p_vals.iloc[p_vals.values != 0])
     p_vals.replace(0, p_nonzero_min, inplace=True)
     # replace p=NaN with non-significant p
     p_vals.fillna(0.999999, inplace=True)
     # obtain slope to decipher trend
-    slope = dml_results[ref_category][f"Est_Sample.Region{comp_category}"]
-    slope.index = dml_results[ref_category].Probe_ID
+    slope = dml_results[f"{ref} vs {comp}"][f"Est_Sample.Region{comp}"]
+    slope.index = dml_results[f"{ref} vs {comp}"].Probe_ID
     # find hypermethylated probes
     pos_sig = (false_discovery_control(p_vals) < p_thres) & (slope >= effect_thres)
     # find hypomethylated probes
@@ -72,16 +70,13 @@ for ref_category, comp_category in [
         slope <= (-1) * effect_thres
     )
     # record information
-    num_diff_probes.loc[ref_category, comp_category] = pos_sig.sum()
-    num_diff_probes.loc[comp_category, ref_category] = neg_sig.sum()
-    trends.loc[
-        pos_sig.iloc[pos_sig.values].index, f"{ref_category} vs {comp_category}"
-    ] = "up"
-    trends.loc[
-        neg_sig.iloc[neg_sig.values].index, f"{ref_category} vs {comp_category}"
-    ] = "down"
+    num_diff_probes.loc[f"{ref} vs {comp}", "Higher"] = pos_sig.sum()
+    num_diff_probes.loc[f"{ref} vs {comp}", "Lower"] = neg_sig.sum()
+    trends.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "up"
+    trends.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "down"
 
 num_diff_probes.to_csv(f"{din}/number_dml_probes_btwn_categories.csv")
+print(num_diff_probes.to_markdown())  # printing for Wiki
 
 trends.dropna(axis=0, how="all", inplace=True)
 trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
@@ -115,31 +110,85 @@ for current_node, next_node in [
                 )
 
 # Save interesting probe sets to TXT file
-probe_sets = {
-    "CUB_down_from_Normal": list(trends.iloc[trends.CUB.values == "down"].index),
-    "CUB_up_from_Normal": list(trends.iloc[trends.CUB.values == "up"].index),
-    "AN_up_from_OQ": list(trends.iloc[trends.AN.values == "up"].index),
-    "AN_down_from_OQ": list(trends.iloc[trends.AN.values == "down"].index),
-    "AN_up_and_TU_down": list(
-        trends.iloc[(trends.AN.values == "up") & (trends.TU.values == "down")].index
-    ),
-    "AN_up_and_TU_nd_or_up": list(
-        trends.iloc[(trends.AN.values == "up") & (trends.TU.values != "down")].index
-    ),
-    "AN_down_and_TU_nd_or_down": list(
-        trends.iloc[(trends.AN.values == "down") & (trends.TU.values != "up")].index
-    ),
-    "AN_down_and_TU_up": list(
-        trends.iloc[(trends.AN.values == "down") & (trends.TU.values == "up")].index
-    ),
-    "TU_down_from_AN": list(trends.iloc[trends.TU.values == "down"].index),
-    "TU_up_from_AN": list(trends.iloc[trends.TU.values == "up"].index),
-}
+probe_sets = {}
+for ref, comp in ref_comp_pairs:
+    for trend in ["up", "down"]:
+        probe_sets[f"{comp}_{trend}_from_{ref}"] = list(
+            trends.iloc[trends[f"{ref} vs {comp}"].values == trend].index
+        )
+
+probe_sets["AN_down_and_TU_up"] = list(
+    trends.iloc[
+        (trends["OQ vs AN"].values == "down") & (trends["AN vs TU"].values == "up")
+    ].index
+)
+probe_sets["AN_up_and_TU_down"] = list(
+    trends.iloc[
+        (trends["OQ vs AN"].values == "up") & (trends["AN vs TU"].values == "down")
+    ].index
+)
 
 for key, probelist in probe_sets.items():
     with open(f"{dout}/probe_set_{key}.txt", "w", encoding="utf-8") as f:
         for item in probelist:
             f.write(f"{item}\n")
+
+###########################################################
+#### Analyze DML patterns across all tissue categories ####
+###########################################################
+
+#### Define set names and their specific patterns ####
+
+set_patterns = {
+    # Monotonic increase
+    "Monotonic increase A": ["n.d.", "n.d.", "n.d.", "up"],
+    "Monotonic increase B": ["up", "n.d.", "n.d.", "n.d."],
+    "Monotonic increase C": ["up", "n.d.", "n.d.", "up"],
+    "Monotonic increase D": ["n.d.", "n.d.", "up", "n.d."],
+    "Monotonic increase E": ["up", "n.d.", "up", "n.d."],
+    # Monotonic decrease
+    "Monotonic decrease A": ["n.d.", "n.d.", "n.d.", "down"],
+    "Monotonic decrease B": ["down", "n.d.", "n.d.", "n.d."],
+    "Monotonic decrease C": ["down", "n.d.", "n.d.", "down"],
+    "Monotonic decrease D": ["n.d.", "n.d.", "down", "n.d."],
+    "Monotonic decrease E": ["down", "n.d.", "down", "n.d."],
+    # Non-monotonic down & up, or "valley"
+    "Non-monotonic valley A": ["down", "n.d.", "n.d.", "up"],
+    "Non-monotonic valley B": ["n.d.", "n.d.", "down", "up"],
+    "Non-monotonic valley C": ["down", "n.d.", "down", "up"],
+    "Non-monotonic valley D": ["down", "n.d.", "up", "n.d."],
+    "Non-monotonic valley E": ["down", "n.d.", "up", "up"],
+    # Non-monotonic up & down, or "hill"
+    "Non-monotonic hill A": ["up", "n.d.", "n.d.", "down"],
+    "Non-monotonic hill B": ["n.d.", "n.d.", "up", "down"],
+    "Non-monotonic hill C": ["up", "n.d.", "up", "down"],
+    "Non-monotonic hill D": ["up", "n.d.", "down", "n.d."],
+    # Non-monotonic mixed
+    "Non-monotomic mixed A": ["down", "n.d.", "up", "down"],
+    "Non-monotomic mixed B": ["up", "n.d.", "down", "up"],
+}
+
+#### Get probe names with each patter ####
+
+probesets = {}
+
+for setname, pattern in set_patterns.items():
+    subdata = trends.iloc[
+        [
+            np.all(trends.loc[i, :].values.ravel()[1:] == np.array(pattern))
+            for i in trends.index
+        ],
+        :,
+    ]
+    probesets[setname] = list(subdata.index)
+
+#### Write probe sets to TXT files ####
+
+for setname, probes in probesets.items():
+    setname_file = re.sub(r"[-\s]", "_", setname)
+    with open(f"{dout}/probe_set_{setname_file}.txt", "w", encoding="utf-8") as f:
+        for probe in probes:
+            f.write(f"{probe}\n")
 
 ##########################################
 #### Analyze DML results by biomarker ####
@@ -197,34 +246,27 @@ seg_cols = [
     "Seg_Pval",
     "Seg_Pval_adj",
 ]
-segs = dmr_results["CUB"]["AN"][seg_cols].drop_duplicates(ignore_index=True)
 
-# Segment length (kb) distribution
-seglen = (segs.Seg_End - segs.Seg_Start).values.ravel()
-for n in [1, 10, 50, 100, 250, 500, 750]:
-    print(f"Number of segments larger than {n}kb: {sum(seglen>n*1000)}")
-
-# Number of probes in a segment
-n_probes_per_seg = dmr_results["CUB"]["AN"].groupby("Seg_ID").size().values.ravel()
-for n in [2, 5, 10, 25, 50, 75]:
-    print(f"Segment with >{n} probes: {sum(n_probes_per_seg>n)}")
-
-# Which chromosomes do larger segments lie in?
-size_thres = 50e3  # 50kb
-n_segs_per_chrom = segs.iloc[seglen > size_thres, :].groupby("Seg_Chrm").size()
-chroms = [f"chr{i}" for i in range(1, 23)] + ["chrX", "chrY"]
-
-fig, ax = plt.subplots(figsize=(7, 5))
-
-ax.bar(np.arange(len(chroms)), n_segs_per_chrom.loc[chroms])
-ax.set_xticks(np.arange(len(chroms)))
-ax.set_xticklabels(chroms, rotation=45, ha="right")
-ax.set_xlabel("Chromosome")
-ax.set_ylabel("Number of segments")
-ax.set_title(
-    f"Distribution of large (>{int(size_thres/1e+3)}kb) segments across chromosomes"
-)
-
-plt.tight_layout()
-fig.savefig(f"{plot_dir}/num_large_segs_by_chrom_refCUB.png")
-plt.close()
+for ref, comp in ref_comp_pairs:
+    segs = dmr_results[f"{ref} vs {comp}"][seg_cols].drop_duplicates(ignore_index=True)
+    # Segment length (kb) distribution
+    seglen = (segs.Seg_End - segs.Seg_Start).values.ravel()
+    for n in [1, 10, 50, 100, 250, 500, 750]:
+        print(f"Number of segments larger than {n}kb: {sum(seglen>n*1000)}")
+    # Which chromosomes do larger segments lie in?
+    size_thres = 50e3  # 50kb
+    n_segs_per_chrom = segs.iloc[seglen > size_thres, :].groupby("Seg_Chrm").size()
+    chroms = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
+    # Plot bar graph of number of large segments
+    fig, ax = plt.subplots(figsize=(7, 5))
+    ax.bar(np.arange(len(chroms)), n_segs_per_chrom.loc[chroms])
+    ax.set_xticks(np.arange(len(chroms)))
+    ax.set_xticklabels(chroms, rotation=45, ha="right")
+    ax.set_xlabel("Chromosome")
+    ax.set_ylabel("Number of segments")
+    ax.set_title(
+        f"Distribution of large (>{int(size_thres/1e+3)}kb) segments across chromosomes"
+    )
+    plt.tight_layout()
+    fig.savefig(f"{plot_dir}/num_large_segs_by_chrom_refCUB.png")
+    plt.close()
