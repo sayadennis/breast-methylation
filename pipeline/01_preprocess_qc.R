@@ -119,12 +119,13 @@ write.csv(
 )
 
 # Remove samples with poor quality metrics
+rm_sampleids <- readLines(paste0(out_dir, "/exclude_IDATs.txt"))
 print("Finding samples with low rate of successful detection...")
 rm_criteria <- qcs_raw_df$frac_dt < 0.9
-rm_sampleids <- rownames(qcs_raw_df[rm_criteria, ])
+rm_sampleids <- c(rm_sampleids, rownames(qcs_raw_df[rm_criteria, ]))
 print("Samples that will be removed:")
 print(rm_sampleids)
-write(rm_sampleids, paste0(out_dir, "/exclude_IDATs.txt"), append = TRUE, sep = "\n")
+writeLines(rm_sampleids, paste0(out_dir, "/exclude_IDATs.txt"))
 print("Wrote samples to exclude to TXT! Removing from beta and SDF objects...")
 
 sdf_proc <- sdf_proc[!(names(sdf_proc) %in% rm_sampleids)]
