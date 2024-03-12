@@ -1,3 +1,5 @@
+# pylint: disable=redefined-outer-name
+
 import re
 
 import matplotlib.pyplot as plt
@@ -164,8 +166,8 @@ set_patterns = {
     "Non-monotonic hill C": ["up", "n.d.", "up", "down"],
     "Non-monotonic hill D": ["up", "n.d.", "down", "n.d."],
     # Non-monotonic mixed
-    "Non-monotomic mixed A": ["down", "n.d.", "up", "down"],
-    "Non-monotomic mixed B": ["up", "n.d.", "down", "up"],
+    "Non-monotonic mixed A": ["down", "n.d.", "up", "down"],
+    "Non-monotonic mixed B": ["up", "n.d.", "down", "up"],
 }
 
 #### Get probe names with each patter ####
@@ -189,6 +191,144 @@ for setname, probes in probesets.items():
     with open(f"{dout}/probe_set_{setname_file}.txt", "w", encoding="utf-8") as f:
         for probe in probes:
             f.write(f"{probe}\n")
+
+
+#### Plot dummy vis with number of probes ####
+
+pattern_names = [
+    "Monotonic increase",
+    "Monotonic decrease",
+    "Non-monotonic \ndown & up",
+    "Non-monotonic \nup & down",
+    "Non-monotonic mixed",
+]
+max_patterns = 5
+
+fig, axs = plt.subplots(
+    nrows=max_patterns,
+    ncols=len(pattern_names),
+    figsize=(3 * len(pattern_names), 1.5 * max_patterns),
+)
+
+
+def add_num(i: int, j: int, setname: str):
+    """
+    Add the text with number of probes to the [i, j] axes.
+    """
+    num_probes = len(probesets[setname])
+    axs[i, j].text(
+        0.05,
+        0.85,
+        f"{num_probes:,} probes",
+        transform=axs[i, j].transAxes,
+        fontsize=10,
+        verticalalignment="bottom",
+        multialignment="center",
+        bbox={
+            "boxstyle": "round",
+            "facecolor": "white",
+            "edgecolor": "red",
+            "alpha": 0.7,
+        },
+    )
+
+
+## Monotonic increase
+axs[0, 0].plot(np.arange(5), [0, 0, 0, 0, 1], linestyle="-", marker="o", c="black")
+add_num(0, 0, "Monotonic increase A")
+axs[1, 0].plot(np.arange(5), [0, 1, 1, 1, 1], linestyle="-", marker="o", c="black")
+add_num(1, 0, "Monotonic increase B")
+axs[2, 0].plot(np.arange(5), [0, 1, 1, 1, 2], linestyle="-", marker="o", c="black")
+add_num(2, 0, "Monotonic increase C")
+axs[3, 0].plot(np.arange(5), [0, 0, 0, 1, 1], linestyle="-", marker="o", c="black")
+add_num(3, 0, "Monotonic increase D")
+axs[4, 0].plot(np.arange(5), [0, 1, 1, 2, 2], linestyle="-", marker="o", c="black")
+add_num(4, 0, "Monotonic increase E")
+
+## Monotonic decrease
+axs[0, 1].plot(np.arange(5), [0, 0, 0, 0, -1], linestyle="-", marker="o", c="black")
+add_num(0, 1, "Monotonic decrease A")
+axs[1, 1].plot(np.arange(5), [0, -1, -1, -1, -1], linestyle="-", marker="o", c="black")
+add_num(1, 1, "Monotonic decrease B")
+axs[2, 1].plot(np.arange(5), [0, -1, -1, -1, -2], linestyle="-", marker="o", c="black")
+add_num(2, 1, "Monotonic decrease C")
+axs[3, 1].plot(np.arange(5), [0, 0, 0, -1, -1], linestyle="-", marker="o", c="black")
+add_num(3, 1, "Monotonic decrease D")
+axs[4, 1].plot(np.arange(5), [0, -1, -1, -2, -2], linestyle="-", marker="o", c="black")
+add_num(4, 1, "Monotonic decrease E")
+
+## Non-monotonic down and up
+axs[0, 2].plot(np.arange(5), [0, -1, -1, -1, 0], linestyle="-", marker="o", c="black")
+add_num(0, 2, "Non-monotonic valley A")
+axs[1, 2].plot(np.arange(5), [0, 0, 0, -1, 0], linestyle="-", marker="o", c="black")
+add_num(1, 2, "Non-monotonic valley B")
+axs[2, 2].plot(np.arange(5), [0, -1, -1, -2, -1], linestyle="-", marker="o", c="black")
+add_num(2, 2, "Non-monotonic valley C")
+axs[3, 2].plot(np.arange(5), [0, -1, -1, 0, 0], linestyle="-", marker="o", c="black")
+add_num(3, 2, "Non-monotonic valley D")
+axs[4, 2].plot(np.arange(5), [0, -1, -1, 0, 1], linestyle="-", marker="o", c="black")
+add_num(4, 2, "Non-monotonic valley E")
+
+## Non-monotonic up and down
+axs[0, 3].plot(np.arange(5), [0, 1, 1, 1, 0], linestyle="-", marker="o", c="black")
+add_num(0, 3, "Non-monotonic hill A")
+axs[1, 3].plot(np.arange(5), [0, 0, 0, 1, 0], linestyle="-", marker="o", c="black")
+add_num(1, 3, "Non-monotonic hill B")
+axs[2, 3].plot(np.arange(5), [0, 1, 1, 2, 1], linestyle="-", marker="o", c="black")
+add_num(2, 3, "Non-monotonic hill C")
+axs[3, 3].plot(np.arange(5), [0, 1, 1, 0, 0], linestyle="-", marker="o", c="black")
+add_num(3, 3, "Non-monotonic hill D")
+
+## Non-monotonic mixed
+axs[0, 4].plot(np.arange(5), [0, -1, -1, 0, -1], linestyle="-", marker="o", c="black")
+add_num(0, 4, "Non-monotonic mixed A")
+axs[1, 4].plot(np.arange(5), [0, 1, 1, 0, 1], linestyle="-", marker="o", c="black")
+add_num(1, 4, "Non-monotonic mixed B")
+
+for i in range(max_patterns):
+    for j, pattern_name in enumerate(pattern_names):
+        axs[i, j].spines["right"].set_visible(False)
+        axs[i, j].spines["top"].set_visible(False)
+        axs[i, j].spines["bottom"].set_visible(False)
+        axs[i, j].spines["left"].set_visible(False)
+        axs[i, j].set_ylim(-2.25, 2.25)
+        axs[i, j].set_yticks([])
+        axs[i, j].set_yticklabels([])
+        axs[i, j].set_xlim(-0.25, 4.25)
+        axs[i, j].set_xticks(np.arange(5))
+        # add horizontal lines
+        axs[i, j].axhline(2, linestyle="--", linewidth=0.5, c="magenta")
+        axs[i, j].axhline(1, linestyle="--", linewidth=0.5, c="magenta")
+        axs[i, j].axhline(0, linestyle="--", linewidth=1.0, c="black")
+        axs[i, j].axhline(-1, linestyle="--", linewidth=0.5, c="cyan")
+        axs[i, j].axhline(-2, linestyle="--", linewidth=0.5, c="cyan")
+        for x in [0, 1, 2, 3, 4]:
+            axs[i, j].axvline(x, linestyle="--", linewidth=0.5, c="grey")
+        if i == (max_patterns - 1):
+            axs[i, j].set_xticklabels(
+                ["Normal", "CUB", "OQ", "AN", "TU"],
+                fontsize=12,
+                ha="right",
+                rotation=30,
+            )
+        else:
+            axs[i, j].set_xticklabels([])
+        # if first panel, add column title
+        if i == 0:
+            axs[i, j].set_title(pattern_name, fontsize=14)
+        # if left-most column, add labels
+        if j == 0:
+            axs[i, j].set_ylabel(
+                ["A", "B", "C", "D", "E"][i] + "  ",
+                fontsize=17,
+                rotation=0,
+                va="center",
+                ha="right",
+            )
+
+plt.tight_layout()
+fig.savefig(f"{plot_dir}/patterns_across_tissues.png")
+plt.close()
 
 ##########################################
 #### Analyze DML results by biomarker ####
