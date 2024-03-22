@@ -5,15 +5,15 @@
 #SBATCH -N 1
 #SBATCH -n 1
 #SBATCH --mem=96G
-#SBATCH --job-name=dvmc
+#SBATCH --job-name=dvmc_all
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL
-#SBATCH --output=/projects/p30791/methylation/out/recreate_DVMC_results.out
+#SBATCH --output=/projects/p30791/methylation/out/DVMC_all.out
 
 module purge all 
 module load R/4.3.0
 
 cd ~/breast-methylation/exploration/
 
-Rscript --vanilla recreate_DVMC_results.R
+Rscript --vanilla DVMC_all.R
 
