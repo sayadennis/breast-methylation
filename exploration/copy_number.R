@@ -28,18 +28,35 @@ if (!file.exists(dout)) {
 ## Load data and metadata
 sdfs <- readRDS(paste0(din, "/sdf_processed.RDS"))
 meta <- read.csv(meta_fn)
-meta <- meta[meta$IDAT %in% names(sdfs), ]
 
-#################################################
-#### Create CN Segment plots for each sample ####
-#################################################
+meta <- meta[meta$IDAT %in% names(sdfs), ]
+sdfs <- sdfs[meta$IDAT]
+
+############################################################
+#### Create CN Segment tables and plots for each sample ####
+############################################################
+
+tissue_categories <- c("Normal", "CUB", "OQ", "AN", "TU")
+seg.cols <- c("ID", "chrom", "loc.start", "loc.end", "num.mark", "seg.mean", "seg.sd", "seg.median")
+seg.dfs <- list(
+  Normal = data.frame(matrix(ncol = length(seg.cols), nrow = 0)),
+  CUB = data.frame(matrix(ncol = length(seg.cols), nrow = 0)),
+  OQ = data.frame(matrix(ncol = length(seg.cols), nrow = 0)),
+  AN = data.frame(matrix(ncol = length(seg.cols), nrow = 0)),
+  TU = data.frame(matrix(ncol = length(seg.cols), nrow = 0))
+)
+for (tissue_category in tissue_categories) {
+  names(seg.dfs[[tissue_category]]) <- seg.cols
+}
 
 for (i in seq_along(sdfs)) {
   segs <- cnSegmentation(sdfs[[i]])
   idat_id <- names(sdfs)[[i]]
   tissue_category <- meta[meta$IDAT == idat_id, "Sample.Region"]
-  patient_id <- meta[meta$IDAT == idat_id, "ID"]
   cat("#### ", idat_id, "(", tissue_category, ") ####\n")
+  segs$seg.signals$ID <- idat_id
+  seg.dfs[[tissue_category]] <- rbind(seg.dfs[[tissue_category]], segs$seg.signals)
+  patient_id <- meta[meta$IDAT == idat_id, "ID"]
   gg_plot <- visualizeSegments(segs, to.plot = paste0("chr", c(1:22))) +
     ggtitle(paste0("CN Segments: ", idat_id, "(", tissue_category, ")")) +
     theme(legend.position = "none") +
@@ -52,13 +69,27 @@ for (i in seq_along(sdfs)) {
   )
 }
 
+if (!file.exists(paste0(din, "/copy_number"))) {
+  dir.create(paste0(din, "/copy_number"))
+}
+
+for (tissue_category in names(seg.dfs)) {
+  write.table(
+    seg.dfs[[tissue_category]][, c(1:6)], # only the first 6 columns
+    file = paste0(din, "/copy_number/segs_", tissue_category, ".csv"),
+    quote = FALSE,
+    row.names = FALSE,
+    col.names = FALSE
+  )
+}
+
 #########################################
 #### Combine Case CNVs into one plot ####
 #########################################
 
 tissue_categories <- c("CUB", "OQ", "AN", "TU")
 
-num_patients <- 72
+num_patients <- 4
 
 aspect_ratio <- 4 # ratio for each panel
 plot_iter <- 1 # plot iteration number for layout_matrix argument
