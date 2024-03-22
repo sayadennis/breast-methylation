@@ -4,7 +4,7 @@
 #SBATCH -t 12:00:00
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH --mem=72G
+#SBATCH --mem=96G
 #SBATCH --job-name=dvmc
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL

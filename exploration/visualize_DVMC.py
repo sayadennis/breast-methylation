@@ -7,7 +7,7 @@ from scipy.stats import false_discovery_control
 
 plotdir = "/projects/p30791/methylation/plots/differential_methylation/dvmc"
 dvmc = pd.read_csv(
-    "/projects/p30791/methylation/sesame_out/differential_methylation/topDVMC.csv",
+    "/projects/p30791/methylation/sesame_out/differential_methylation/DVMC_EPIC.csv",
     index_col=0,
 )
 
@@ -20,9 +20,13 @@ dvmc["q(TT)"] = false_discovery_control(dvmc["P(TT)"])
 # Remove non-CpG probes
 dvmc = dvmc.iloc[[i.startswith("cg") for i in dvmc.index], :]
 
-## Fig. 1a - differentially variable and differentially methylated CpGs
+##############
+#### Plot ####
+##############
 
-fig, ax = plt.subplots(nrows=1, ncols=2, figsize=(6, 3))
+fig, ax = plt.subplots(nrows=1, ncols=4, figsize=(12, 3))
+
+## Fig. 1a - differentially variable and differentially methylated CpGs
 
 for i, (test_name, title) in enumerate(zip(["BT", "TT"], ["variable", "methylated"])):
     fdr_cts = (dvmc[f"q({test_name})"] < 0.05).sum().item()
@@ -43,19 +47,13 @@ for i, (test_name, title) in enumerate(zip(["BT", "TT"], ["variable", "methylate
     ax[i].spines["top"].set_visible(False)
     ax[i].spines["right"].set_visible(False)
 
-plt.tight_layout()
-fig.savefig(f"{plotdir}/exploratory_fig1a.png")
-plt.close()
-
 ## Fig. 1b - scatterplot of CpGs by DV and DM p-values
-
-fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 3))
 
 num_dvmc = dvmc.iloc[
     (dvmc["P(TT)"].values < 0.05) & (dvmc["q(BT)"].values < 0.05), :
 ].shape[0]
 
-ax.scatter(
+ax[2].scatter(
     -1
     * np.log10(
         dvmc.iloc[(dvmc["P(TT)"].values < 0.05) & (dvmc["q(BT)"].values < 0.05), :][
@@ -72,7 +70,7 @@ ax.scatter(
     s=4,
     c="red",
 )
-ax.scatter(
+ax[2].scatter(
     -1
     * np.log10(
         dvmc.iloc[(dvmc["P(TT)"].values >= 0.05) | (dvmc["q(BT)"].values >= 0.05), :][
@@ -89,32 +87,26 @@ ax.scatter(
     s=4,
     c="black",
 )
-ax.text(
+ax[2].text(
     0.35,
     0.65,
     f"{num_dvmc:,} DVMCs",
     fontsize=9,
-    transform=ax.transAxes,
+    transform=ax[2].transAxes,
     color="red",
 )
-ax.set_xlabel("-log10[P] (DMC)")
-ax.set_ylabel("-log10[q] (DVC)")
-
-plt.tight_layout()
-fig.savefig(f"{plotdir}/exploratory_fig1b.png")
-plt.close()
+ax[2].set_xlabel("-log10[P] (DMC)")
+ax[2].set_ylabel("-log10[q] (DVC)")
 
 ## Fig. 1c
 
 sig_dvmc = dvmc.iloc[(dvmc["P(TT)"].values < 0.05) & (dvmc["q(BT)"].values < 0.05), :]
 
-fig, ax = plt.subplots(nrows=1, ncols=1, figsize=(3, 3))
-
 categories = ["DV", "DM"]
 x = np.arange(len(categories))  # positions
 width = 0.35
 
-bars1 = ax.bar(
+bars1 = ax[3].bar(
     x - width / 2,
     [
         sig_dvmc.iloc[sig_dvmc["log[V1/V0]"].values > 1, :].shape[0],
@@ -125,7 +117,7 @@ bars1 = ax.bar(
     color="dimgray",
     edgecolor="black",
 )
-bars2 = ax.bar(
+bars2 = ax[3].bar(
     x + width / 2,
     [
         sig_dvmc.iloc[sig_dvmc["log[V1/V0]"].values < 1, :].shape[0],
@@ -137,19 +129,14 @@ bars2 = ax.bar(
     edgecolor="black",
 )
 
-ax.set_ylabel("Count (DVMC)")
-ax.set_xticks(x)
-ax.set_xticklabels(categories)
-ax.spines["top"].set_visible(False)
-ax.spines["right"].set_visible(False)
-ax.spines["bottom"].set_visible(False)
-ax.legend()
+ax[3].set_ylabel("Count (DVMC)")
+ax[3].set_xticks(x)
+ax[3].set_xticklabels(categories)
+ax[3].spines["top"].set_visible(False)
+ax[3].spines["right"].set_visible(False)
+ax[3].spines["bottom"].set_visible(False)
+ax[3].legend()
 
 plt.tight_layout()
-fig.savefig(f"{plotdir}/exploratory_fig1c.png")
+fig.savefig(f"{plotdir}/exploratory_fig1_EPIC.png")
 plt.close()
-
-## Fig. 1d
-
-
-## Fig. 1e
