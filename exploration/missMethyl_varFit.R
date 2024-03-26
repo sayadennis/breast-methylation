@@ -24,12 +24,14 @@ comps <- c("AN", "CUB", "OQ", "AN", "TU")
 for (i in seq_along(refs)) {
   ref <- refs[i]
   comp <- comps[i]
+  print(paste0("Running for comparison with reference ", ref, " and comparison ", comp, "..."))
 
   ## Subset the betas and metadata
   meta_sub <- meta[meta$Sample.Region %in% c(ref, comp), ]
   meta_sub["(Intercept)"] <- 1 # needed for varFit
   meta_sub$Sample.Region.bin <- as.numeric(meta_sub$Sample.Region == comp)
   betas_sub <- betas[, paste0("X", meta_sub$IDAT)]
+  print("Finished aligning metadata and betas for this comparison!")
 
   ## Exclude probes that are missing levels on sample region etc.
   cpg_ok <- checkLevels(betas_sub, meta_sub$Sample.Region)
@@ -39,20 +41,24 @@ for (i in seq_along(refs)) {
   ## Exclude probes that include any missing values (too strict but testing quick & dirty for now)
   keep <- apply(betas_sub, 1, function(row) all(!is.na(row)))
   betas_sub <- betas_sub[keep, ]
+  print("Finished narrowing down CpGs of interest!")
 
   fitvar <- varFit(
     betas_sub,
     design = meta_sub[c("(Intercept)", "Sample.Region.bin")],
     coef = c(1, 2) # Intercept and binary sample region
   )
+  print("Finished running varFit! Selecting top DVs...")
   topDV <- topVar(
     fitvar,
     coef = 2,
     number = dim(betas_sub)[1] # number of top probes to include
   )
+  print("Writing top DV results to CSV...")
   write.csv(
     topDV,
     paste0(dout, "/topDV_", ref, "_vs_", comp, ".csv"),
     quote = FALSE, row.names = TRUE
   )
+  print("Done!")
 }
