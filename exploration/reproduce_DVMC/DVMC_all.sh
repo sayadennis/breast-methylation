@@ -13,7 +13,7 @@
 module purge all 
 module load R/4.3.0
 
-cd ~/breast-methylation/exploration/
+cd ~/breast-methylation/exploration/reproduce_DVMC/
 
 Rscript --vanilla DVMC_all.R
 

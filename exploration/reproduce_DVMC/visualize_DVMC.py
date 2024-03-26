@@ -8,6 +8,8 @@ from scipy.stats import false_discovery_control
 plotdir = "/projects/p30791/methylation/plots/differential_methylation/dvmc"
 
 dvmc_types = [
+    "HM450_without_pOOBAH",
+    "Normal_vs_AN_without_pOOBAH",
     "Normal_vs_CUB",
     "CUB_vs_OQ",
     "OQ_vs_AN",
