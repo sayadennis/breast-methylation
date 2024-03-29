@@ -60,5 +60,13 @@ for (i in seq_along(refs)) {
     paste0(dout, "/topDV_", ref, "_vs_", comp, ".csv"),
     quote = FALSE, row.names = TRUE
   )
-  print("Done!")
+  print("Done! Writing top DV probe IDs to TXT...")
+  writeLines(
+    rownames(topDV[(topDV["Adj.P.Value"] < 0.05) & (topDV["LogVarRatio"] > 0.2), ]),
+    paste0(dout, "/hyperDV_missMethyl_", ref, "_vs_", comp, ".txt")
+  )
+  writeLines(
+    rownames(topDV[(topDV["Adj.P.Value"] < 0.05) & (topDV["LogVarRatio"] < -0.2), ]),
+    paste0(dout, "/hypoDV_missMethyl_", ref, "_vs_", comp, ".txt")
+  )
 }
