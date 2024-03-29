@@ -1,5 +1,6 @@
 # pylint: disable=redefined-outer-name
 
+import os
 import re
 
 import matplotlib.pyplot as plt
@@ -12,8 +13,14 @@ from scipy.stats import false_discovery_control
 ######################################
 
 din = "/projects/p30791/methylation/sesame_out/differential_methylation"
-dout = "/projects/p30791/methylation/sesame_out/differential_methylation"
-plot_dir = "/projects/p30791/methylation/plots"
+dout = din
+plot_dir = "/projects/p30791/methylation/plots/differential_methylation"
+
+if not os.path.exists(plot_dir):
+    os.makedirs(plot_dir)
+
+if not os.path.exists(f"{dout}/all_probes_DM"):
+    os.makedirs(f"{dout}/all_probes_DM")
 
 ref_comp_pairs = [
     ("Normal", "CUB"),
@@ -31,6 +38,12 @@ for ref, comp in ref_comp_pairs:
     # DMR results
     dmr_results[f"{ref} vs {comp}"] = pd.read_csv(
         f"{din}/DMR_results_Sample.Region{comp}_ref{ref}.csv"
+    )
+    # While we're here, write the lists of all probe sets
+    dml_results[f"{ref} vs {comp}"].Probe_ID.to_csv(
+        f"{dout}/all_probes_DM/all_probes_{ref}_vs_{comp}.txt",
+        header=False,
+        index=False,
     )
 
 tissue_types = ["Normal", "CUB", "OQ", "AN", "TU"]
@@ -86,31 +99,6 @@ trends.fillna("n.d.", inplace=True)
 
 trends.to_csv(f"{din}/dml_up_down_pairwise_trends.csv")
 
-## Print statements for Sankey plots
-## https://developers.google.com/chart/interactive/docs/gallery/sankey
-for current_node, next_node in [
-    ("All probes", "Normal vs CUB"),
-    ("Normal vs CUB", "CUB vs OQ"),
-    ("CUB vs OQ", "OQ vs AN"),
-    ("OQ vs AN", "AN vs TU"),
-]:
-    if current_node == "All probes":
-        num_up = (trends[next_node] == "up").sum()
-        num_down = (trends[next_node] == "down").sum()
-        num_nd = (trends[next_node] == "n.d.").sum()
-        print(f"       [ '{current_node}', '{next_node} - up', {num_up} ],")
-        print(f"       [ '{current_node}', '{next_node} - down', {num_down} ],")
-        print(f"       [ '{current_node}', '{next_node} - n.d.', {num_nd} ],")
-    else:
-        for reg1 in ["up", "down", "n.d."]:
-            for reg2 in ["up", "down", "n.d."]:
-                num = (
-                    (trends[current_node] == reg1) & (trends[next_node] == reg2)
-                ).sum()
-                print(
-                    f"       [ '{current_node} - {reg1}', '{next_node} - {reg2}', {num} ],"
-                )
-
 # Save interesting probe sets to TXT file
 probe_sets = {}
 for ref, comp in ref_comp_pairs:
@@ -135,12 +123,11 @@ for key, probelist in probe_sets.items():
         for item in probelist:
             f.write(f"{item}\n")
 
-###########################################################
-#### Analyze DML patterns across all tissue categories ####
-###########################################################
+#########################################################
+#### Group DML patterns across all tissue categories ####
+#########################################################
 
 #### Define set names and their specific patterns ####
-
 set_patterns = {
     # Monotonic increase
     "Monotonic increase A": ["n.d.", "n.d.", "n.d.", "up"],
@@ -171,7 +158,6 @@ set_patterns = {
 }
 
 #### Get probe names with each patter ####
-
 probesets = {}
 
 for setname, pattern in set_patterns.items():
@@ -185,7 +171,6 @@ for setname, pattern in set_patterns.items():
     probesets[setname] = list(subdata.index)
 
 #### Write probe sets to TXT files ####
-
 for setname, probes in probesets.items():
     setname_file = re.sub(r"[-\s]", "_", setname)
     with open(f"{dout}/probe_set_{setname_file}.txt", "w", encoding="utf-8") as f:
@@ -194,7 +179,6 @@ for setname, probes in probesets.items():
 
 
 #### Plot dummy vis with number of probes ####
-
 pattern_names = [
     "Monotonic increase",
     "Monotonic decrease",
@@ -330,6 +314,28 @@ plt.tight_layout()
 fig.savefig(f"{plot_dir}/patterns_across_tissues.png")
 plt.close()
 
+###################################################################
+#### For smaller probe sets from global patterns, map to genes ####
+###################################################################
+
+probemeta = pd.read_csv(
+    "/projects/p30791/methylation/copied_from_b1122/data/meta/EPIC-8v2-0_A1.csv",
+    skiprows=7,
+)
+
+for pattern_name in [
+    "Monotonic increase D",
+    "Monotonic increase E",
+    "Monotonic decrease D",
+    "Monotonic decrease E",
+]:
+    probenames = probesets[pattern_name]
+    genes = probemeta.iloc[
+        [probe_id in probenames for probe_id in probemeta["Name"]], :
+    ]["UCSC_RefGene_Name"].unique()
+    print(f"\n\n{pattern_name}")
+    print(genes)
+
 ##########################################
 #### Analyze DML results by biomarker ####
 ##########################################
@@ -388,14 +394,23 @@ seg_cols = [
 ]
 
 for ref, comp in ref_comp_pairs:
+    print(f"#### Comparison - {ref} vs {comp} ####")
     segs = dmr_results[f"{ref} vs {comp}"][seg_cols].drop_duplicates(ignore_index=True)
+    segs.set_index("Seg_ID", drop=True, inplace=True)
+    # Number of probes per segment
+    num_probes = dmr_results[f"{ref} vs {comp}"].groupby("Seg_ID").size()
     # Segment length (kb) distribution
-    seglen = (segs.Seg_End - segs.Seg_Start).values.ravel()
+    seglen = pd.Series(segs.Seg_End - segs.Seg_Start, index=segs.index)
     for n in [1, 10, 50, 100, 250, 500, 750]:
         print(f"Number of segments larger than {n}kb: {sum(seglen>n*1000)}")
     # Which chromosomes do larger segments lie in?
-    size_thres = 50e3  # 50kb
-    n_segs_per_chrom = segs.iloc[seglen > size_thres, :].groupby("Seg_Chrm").size()
+    # size_thres = 50e3  # 50kb
+    probe_thres = 5
+    n_segs_per_chrom = (
+        segs.loc[num_probes.iloc[num_probes.values > probe_thres].index, :]
+        .groupby("Seg_Chrm")
+        .size()
+    )
     chroms = [f"chr{i}" for i in range(1, 23)] + ["chrX"]
     # Plot bar graph of number of large segments
     fig, ax = plt.subplots(figsize=(7, 5))
@@ -405,8 +420,9 @@ for ref, comp in ref_comp_pairs:
     ax.set_xlabel("Chromosome")
     ax.set_ylabel("Number of segments")
     ax.set_title(
-        f"Distribution of large (>{int(size_thres/1e+3)}kb) segments across chromosomes"
+        # f"Distribution of large (>{int(size_thres/1e+3)}kb) segments across chromosomes"
+        f"Distribution of large (>{probe_thres} probes) segments across chromosomes"
     )
     plt.tight_layout()
-    fig.savefig(f"{plot_dir}/num_large_segs_by_chrom_refCUB.png")
+    fig.savefig(f"{plot_dir}/num_large_segs_by_chrom_ref{ref}_comp{comp}.png")
     plt.close()
