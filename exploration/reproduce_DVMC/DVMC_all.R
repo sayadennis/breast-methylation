@@ -1,7 +1,7 @@
 source("iEVORA.R")
 
 din <- "/projects/p30791/methylation/sesame_out"
-dout <- "/projects/p30791/methylation/sesame_out/differential_methylation"
+dout <- "/projects/p30791/methylation/sesame_out/differential_variability"
 probemeta <- "/projects/p30791/methylation/illumina_array_meta"
 
 ## Load data
@@ -42,11 +42,18 @@ for (i in seq_along(refs)) {
   ## Run iEVORA
   DVMC.m <- iEVORA(data.m, pheno.v)
 
+  # Write all results to CSV
   write.csv(
     DVMC.m,
     paste0(dout, "/DVMC_", ref, "_vs_", comp, ".csv"),
     quote = FALSE,
     row.names = TRUE
+  )
+
+  # Write DV-signidicant probe IDs to TXT
+  writeLines(
+    rownames(DVMC.m[(DVMC.m[, "q(BT)"] < 0.05) & (DVMC.m[, "P(TT)"] < 0.05), ]),
+    paste0(dout, "/DV_iEVORA_", ref, "_vs_", comp, ".txt")
   )
 }
 

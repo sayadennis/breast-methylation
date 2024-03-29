@@ -25,8 +25,8 @@ meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 #### Differential methylation analysis by tissue category ####
 ##############################################################
 
-refs <- c("Normal", "CUB", "OQ", "AN")
-comps <- c("CUB", "OQ", "AN", "TU")
+refs <- c("Normal", "Normal", "CUB", "OQ", "AN")
+comps <- c("AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
   ref <- refs[i]

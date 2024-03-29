@@ -15,5 +15,6 @@ module load R/4.3.0
 
 cd ~/breast-methylation/exploration/reproduce_DVMC/
 
+mkdir -p /projects/p30791/methylation/sesame_out/differential_variability/
 Rscript --vanilla DVMC_all.R
 
