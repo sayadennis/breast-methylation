@@ -88,8 +88,8 @@ for ref, comp in ref_comp_pairs:
     # record information
     num_diff_probes.loc[f"{ref} vs {comp}", "Higher"] = pos_sig.sum()
     num_diff_probes.loc[f"{ref} vs {comp}", "Lower"] = neg_sig.sum()
-    trends.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "up"
-    trends.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "down"
+    trends.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "hyper"
+    trends.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "hypo"
 
 num_diff_probes.to_csv(f"{din}/number_dml_probes_btwn_categories.csv")
 print(num_diff_probes.to_markdown())  # printing for Wiki
@@ -98,24 +98,24 @@ trends.dropna(axis=0, how="all", inplace=True)
 trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
 trends.fillna("n.d.", inplace=True)
 
-trends.to_csv(f"{din}/dml_up_down_pairwise_trends.csv")
+trends.to_csv(f"{din}/dml_hyper_hypo_pairwise_trends.csv")
 
 # Save interesting probe sets to TXT file
 probe_sets = {}
 for ref, comp in ref_comp_pairs:
-    for trend in ["up", "down"]:
-        probe_sets[f"{comp}_{trend}_from_{ref}"] = list(
+    for trend in ["hyper", "hypo"]:
+        probe_sets[f"{trend}_{ref}_vs_{comp}"] = list(
             trends.iloc[trends[f"{ref} vs {comp}"].values == trend].index
         )
 
 probe_sets["AN_down_and_TU_up"] = list(
     trends.iloc[
-        (trends["OQ vs AN"].values == "down") & (trends["AN vs TU"].values == "up")
+        (trends["OQ vs AN"].values == "hypo") & (trends["AN vs TU"].values == "hyper")
     ].index
 )
 probe_sets["AN_up_and_TU_down"] = list(
     trends.iloc[
-        (trends["OQ vs AN"].values == "up") & (trends["AN vs TU"].values == "down")
+        (trends["OQ vs AN"].values == "hyper") & (trends["AN vs TU"].values == "hypo")
     ].index
 )
 
@@ -131,31 +131,31 @@ for key, probelist in probe_sets.items():
 #### Define set names and their specific patterns ####
 set_patterns = {
     # Monotonic increase
-    "Monotonic increase A": ["n.d.", "n.d.", "n.d.", "up"],
-    "Monotonic increase B": ["up", "n.d.", "n.d.", "n.d."],
-    "Monotonic increase C": ["up", "n.d.", "n.d.", "up"],
-    "Monotonic increase D": ["n.d.", "n.d.", "up", "n.d."],
-    "Monotonic increase E": ["up", "n.d.", "up", "n.d."],
+    "Monotonic increase A": ["n.d.", "n.d.", "n.d.", "hyper"],
+    "Monotonic increase B": ["hyper", "n.d.", "n.d.", "n.d."],
+    "Monotonic increase C": ["hyper", "n.d.", "n.d.", "hyper"],
+    "Monotonic increase D": ["n.d.", "n.d.", "hyper", "n.d."],
+    "Monotonic increase E": ["hyper", "n.d.", "hyper", "n.d."],
     # Monotonic decrease
-    "Monotonic decrease A": ["n.d.", "n.d.", "n.d.", "down"],
-    "Monotonic decrease B": ["down", "n.d.", "n.d.", "n.d."],
-    "Monotonic decrease C": ["down", "n.d.", "n.d.", "down"],
-    "Monotonic decrease D": ["n.d.", "n.d.", "down", "n.d."],
-    "Monotonic decrease E": ["down", "n.d.", "down", "n.d."],
+    "Monotonic decrease A": ["n.d.", "n.d.", "n.d.", "hypo"],
+    "Monotonic decrease B": ["hypo", "n.d.", "n.d.", "n.d."],
+    "Monotonic decrease C": ["hypo", "n.d.", "n.d.", "hypo"],
+    "Monotonic decrease D": ["n.d.", "n.d.", "hypo", "n.d."],
+    "Monotonic decrease E": ["hypo", "n.d.", "hypo", "n.d."],
     # Non-monotonic down & up, or "valley"
-    "Non-monotonic valley A": ["down", "n.d.", "n.d.", "up"],
-    "Non-monotonic valley B": ["n.d.", "n.d.", "down", "up"],
-    "Non-monotonic valley C": ["down", "n.d.", "down", "up"],
-    "Non-monotonic valley D": ["down", "n.d.", "up", "n.d."],
-    "Non-monotonic valley E": ["down", "n.d.", "up", "up"],
+    "Non-monotonic valley A": ["hypo", "n.d.", "n.d.", "hyper"],
+    "Non-monotonic valley B": ["n.d.", "n.d.", "hypo", "hyper"],
+    "Non-monotonic valley C": ["hypo", "n.d.", "hypo", "hyper"],
+    "Non-monotonic valley D": ["hypo", "n.d.", "hyper", "n.d."],
+    "Non-monotonic valley E": ["hypo", "n.d.", "hyper", "hyper"],
     # Non-monotonic up & down, or "hill"
-    "Non-monotonic hill A": ["up", "n.d.", "n.d.", "down"],
-    "Non-monotonic hill B": ["n.d.", "n.d.", "up", "down"],
-    "Non-monotonic hill C": ["up", "n.d.", "up", "down"],
-    "Non-monotonic hill D": ["up", "n.d.", "down", "n.d."],
+    "Non-monotonic hill A": ["hyper", "n.d.", "n.d.", "hypo"],
+    "Non-monotonic hill B": ["n.d.", "n.d.", "hyper", "hypo"],
+    "Non-monotonic hill C": ["hyper", "n.d.", "hyper", "hypo"],
+    "Non-monotonic hill D": ["hyper", "n.d.", "hypo", "n.d."],
     # Non-monotonic mixed
-    "Non-monotonic mixed A": ["down", "n.d.", "up", "down"],
-    "Non-monotonic mixed B": ["up", "n.d.", "down", "up"],
+    "Non-monotonic mixed A": ["hypo", "n.d.", "hyper", "hypo"],
+    "Non-monotonic mixed B": ["hyper", "n.d.", "hypo", "hyper"],
 }
 
 #### Get probe names with each patter ####
