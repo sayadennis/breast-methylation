@@ -15,6 +15,6 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-mkdir -p /projects/p30791/methylation/sesame_out/differential_methylation/
+mkdir -p /projects/p30791/methylation/differential_methylation/
 Rscript --vanilla 05_modeling.R
 

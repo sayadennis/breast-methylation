@@ -6,9 +6,9 @@ from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
 
 ## Load data
-din = "/projects/p30791/methylation/sesame_out"
+din = "/projects/p30791/methylation/sesame_data"
 dout = "/projects/p30791/methylation/plots"
-meta_fn = "/projects/p30791/methylation/data/meta.csv"
+meta_fn = "/projects/p30791/methylation/raw_data/meta.csv"
 
 betas = pd.read_csv(
     f"{din}/betas_processed.csv", index_col=0

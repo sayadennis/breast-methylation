@@ -15,9 +15,9 @@ cd ~/breast-methylation/pipeline/
 module purge all
 module load R/4.3.0
 
-Rscript --vanilla 02_plot_quality.R "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/plots" "/projects/p30791/methylation/data/meta.csv"
+Rscript --vanilla 02_plot_quality.R "/projects/p30791/methylation/sesame_data" "/projects/p30791/methylation/plots" "/projects/p30791/methylation/raw_data/meta.csv"
 
 module load python-miniconda3/4.12.0
 source activate methylation
 
-python 02_plot_quality.py "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/data/meta.csv" "/projects/p30791/methylation/plots"
+python 02_plot_quality.py "/projects/p30791/methylation/sesame_data" "/projects/p30791/methylation/raw_data/meta.csv" "/projects/p30791/methylation/plots"

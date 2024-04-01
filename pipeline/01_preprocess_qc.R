@@ -13,9 +13,9 @@ if (length(args) != 3) {
     call. = FALSE
   ))
 } else {
-  idat_dir <- args[1] # e.g. "/projects/p30791/methylation/data/IDAT_all"
-  meta_fn <- args[2] # e.g. "/projects/p30791/methylation/data/meta.csv"
-  out_dir <- args[3] # e.g. "/projects/p30791/methylation/sesame_out"
+  idat_dir <- args[1] # e.g. "/projects/p30791/methylation/raw_data/IDAT_all"
+  meta_fn <- args[2] # e.g. "/projects/p30791/methylation/raw_data/meta.csv"
+  out_dir <- args[3] # e.g. "/projects/p30791/methylation/sesame_data"
 }
 
 if (!dir.exists(out_dir)) {

@@ -12,14 +12,19 @@ if (length(args) != 3) {
     call. = FALSE
   )
 } else {
-  din <- args[1] # e.g. "/projects/p30791/methylation/sesame_out/differential_methylation" # nolint
-  dout <- args[2] # e.g. "/projects/p30791/methylation/sesame_out/KYCG"
-  plot_dir <- args[3] # e.g. "/projects/p30791/methylation/plots/KYCG"
+  din <- args[1] # e.g. "/projects/p30791/methylation/differential_methylation"
+  dout <- args[2] # e.g. "/projects/p30791/methylation/differential_methylation/KYCG"
+  plot_dir <- args[3] # e.g. "/projects/p30791/methylation/plots/differential_methylation"
 }
 
 if (!file.exists(dout)) {
   dir.create(dout)
   cat("Directory created:", dout, "\n")
+}
+
+if (!file.exists(plot_dir)) {
+  dir.create(plot_dir)
+  cat("Directory created:", plot_dir, "\n")
 }
 
 ## Read the query probe sets

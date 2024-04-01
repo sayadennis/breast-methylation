@@ -12,9 +12,9 @@ if (length(args) != 3) {
     call. = FALSE
   )
 } else {
-  din <- args[1] # e.g. "/projects/p30791/methylation/sesame_out"
+  din <- args[1] # e.g. "/projects/p30791/methylation/sesame_data"
   dout <- args[2] # e.g. "/projects/p30791/methylation/plots"
-  meta_fn <- args[3] # e.g. "/projects/p30791/methylation/data/meta.csv"
+  meta_fn <- args[3] # e.g. "/projects/p30791/methylation/raw_data/meta.csv"
 }
 
 ## Load data

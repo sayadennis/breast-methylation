@@ -8,8 +8,8 @@ import seaborn as sns
 
 args = sys.argv
 
-din = sys.argv[1]  # "/projects/p30791/methylation/sesame_out"
-meta_fn = sys.argv[2]  # "/projects/p30791/methylation/data/meta.csv"
+din = sys.argv[1]  # "/projects/p30791/methylation/sesame_data"
+meta_fn = sys.argv[2]  # "/projects/p30791/methylation/raw_data/meta.csv"
 dout = sys.argv[3]  # "/projects/p30791/methylation/plots"
 
 meta = pd.read_csv(meta_fn)

@@ -15,5 +15,5 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-Rscript --vanilla 01_preprocess_qc.R "/projects/p30791/methylation/data/IDAT_all" "/projects/p30791/methylation/data/meta.csv" "/projects/p30791/methylation/sesame_out"
+Rscript --vanilla 01_preprocess_qc.R "/projects/p30791/methylation/raw_data/IDAT_all" "/projects/p30791/methylation/raw_data/meta.csv" "/projects/p30791/methylation/sesame_data"
 

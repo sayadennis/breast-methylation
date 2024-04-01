@@ -4,7 +4,8 @@ library(dplyr)
 
 space <- 30000
 
-din <- "/projects/p30791/methylation/sesame_out/differential_methylation"
+din <- "/projects/p30791/methylation/differential_methylation"
+plot_dir <- "/projects/p30791/methylation/plots"
 
 trends <- read.csv(paste0(din, "/dml_up_down_pairwise_trends.csv"))
 
@@ -28,5 +29,5 @@ p <- ggplot(df, aes(
   ) +
   scale_x_discrete(labels = c("All probes", "Normal vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
 
-plot_filepath <- "/projects/p30791/methylation/plots/dml_sankey.png"
+plot_filepath <- paste0(plot_dir, "/dml_sankey.png")
 ggsave(plot_filepath, plot = p, width = 10, height = 6)

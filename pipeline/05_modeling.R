@@ -5,7 +5,9 @@ library(tidyr)
 library(ggplot2)
 
 plotdir <- "/projects/p30791/methylation/plots"
-dout <- "/projects/p30791/methylation/sesame_out/differential_methylation"
+raw_dir <- "/projects/p30791/methylation/raw_data"
+sesame_dir <- "/projects/p30791/methylation/sesame_data"
+dout <- "/projects/p30791/methylation/differential_methylation"
 
 ############################
 #### Load and prep data ####
@@ -13,10 +15,10 @@ dout <- "/projects/p30791/methylation/sesame_out/differential_methylation"
 
 ## Load data
 betas <- read.table(
-  "/projects/p30791/methylation/sesame_out/betas_processed.csv",
+  paste0(sesame_dir, "/betas_processed.csv"),
   row.names = 1, sep = ",", header = TRUE
 ) # nrows=2000 for testing
-meta <- read.csv("/projects/p30791/methylation/data/meta.csv")
+meta <- read.csv(paste0(raw_dir, "/meta.csv"))
 
 betas <- as.matrix(betas)
 meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
@@ -25,8 +27,8 @@ meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 #### Differential methylation analysis by tissue category ####
 ##############################################################
 
-refs <- c("Normal", "Normal", "CUB", "OQ", "AN")
-comps <- c("AN", "CUB", "OQ", "AN", "TU")
+refs <- c("Normal", "CUB", "OQ", "AN", "Normal", "Normal", "CUB", "OQ", "AN")
+comps <- c("TU", "TU", "TU", "TU", "AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
   ref <- refs[i]
@@ -84,6 +86,43 @@ for (i in seq_along(refs)) {
 #   geom_point()
 # ggsave(paste0(plotdir, "/age_vs_betas.png"))
 # nolint end
+
+###################################################################
+#### Differential methylation AN vs. TU separated by ER status ####
+###################################################################
+
+refs <- c("AN")
+comps <- c("TU")
+
+for (i in seq_along(refs)) {
+  ref <- refs[i]
+  comp <- comps[i]
+
+  # Subset the betas and metadata
+  meta_sub <- meta[meta$Sample.Region %in% c(ref, comp), ]
+  betas_sub <- betas[, paste0("X", meta_sub$IDAT)]
+
+  for (er_status in unique(meta_sub$ER)) {
+    # Subset metadata and betas by ER status
+    meta_sub_er <- meta_sub[meta_sub$ER == er_status, ]
+    betas_sub_er <- betas_sub[, paste0("X", meta_sub_er$IDAT)]
+    # Exclude probes that are missing levels on sample region etc.
+    cpg_ok <- checkLevels(betas_sub_er, meta_sub_er$Sample.Region)
+    print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
+    betas_sub_cpgfilter <- betas_sub_er[cpg_ok, ]
+    # Run DML
+    smry <- DML(betas_sub_cpgfilter, ~ Sample.Region + Age, meta = meta_sub_er)
+    test_result <- summaryExtractTest(smry)
+    # Save results
+    write.csv(
+      test_result,
+      paste0(
+        dout, "/DML_results_ER", er_status, "_only_", ref, "_vs_", comp, ".csv"
+      ),
+      quote = FALSE, row.names = FALSE
+    )
+  }
+}
 
 #############################################################
 #### Differential methylation analysis by tumor metadata ####

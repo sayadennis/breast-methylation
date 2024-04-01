@@ -16,7 +16,7 @@ source activate methylation
 
 cd ~/breast-methylation/pipeline/
 
-mkdir -p /projects/p30791/methylation/sesame_out/differential_methylation/
+mkdir -p /projects/p30791/methylation/differential_methylation/
 python 06_evaluate_modeling_results.py
 
 module loar R/4.3.0

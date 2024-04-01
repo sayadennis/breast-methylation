@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name
+# pylint: disable=duplicate-code
 
 import os
 import re
@@ -12,7 +13,7 @@ from scipy.stats import false_discovery_control
 #### Load SeSAMe modeling results ####
 ######################################
 
-din = "/projects/p30791/methylation/sesame_out/differential_methylation"
+din = "/projects/p30791/methylation/differential_methylation"
 dout = din
 plot_dir = "/projects/p30791/methylation/plots/differential_methylation"
 

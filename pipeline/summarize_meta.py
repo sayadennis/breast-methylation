@@ -6,9 +6,9 @@ import numpy as np
 import pandas as pd
 from tabulate import tabulate
 
-meta_fn = sys.argv[1]  # e.g. "/projects/p30791/methylation/data/meta.csv"
+meta_fn = sys.argv[1]  # e.g. "/projects/p30791/methylation/raw_data/meta.csv"
 summary_dir = sys.argv[2]  # e.g. "/projects/p30791/methylation/data_summary"
-sesame_dir = sys.argv[3]  # e.g. "/projects/p30791/methylation/sesame_out"
+sesame_dir = sys.argv[3]  # e.g. "/projects/p30791/methylation/sesame_data"
 meta = pd.read_csv(meta_fn, index_col=0)
 
 if not os.path.exists(summary_dir):

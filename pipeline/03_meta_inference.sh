@@ -15,7 +15,7 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-Rscript --vanilla 03_meta_inference.R "/projects/p30791/methylation/sesame_out" "/projects/p30791/methylation/data/meta.csv" "/projects/p30791/methylation/sesame_out/data_summary"
+Rscript --vanilla 03_meta_inference.R "/projects/p30791/methylation/sesame_data" "/projects/p30791/methylation/raw_data/meta.csv" "/projects/p30791/methylation/data_summary"
 
 module load python-miniconda3/4.12.0
 source activate methylation

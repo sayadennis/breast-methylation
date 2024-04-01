@@ -1,9 +1,11 @@
+# pylint: disable=duplicate-code
+
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
 from scipy.stats import linregress
 
-fin = "/projects/p30791/methylation/sesame_out/data_summary/predicted_meta.csv"
+fin = "/projects/p30791/methylation/data_summary/predicted_meta.csv"
 dout = "/projects/p30791/methylation/plots"
 
 data = pd.read_csv(fin)

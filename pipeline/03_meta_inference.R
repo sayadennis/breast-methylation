@@ -11,9 +11,9 @@ if (length(args) != 3) {
     call. = FALSE
   )
 } else {
-  ddata <- args[1] # e.g. "/projects/p30791/methylation/sesame_out"
-  meta_fn <- args[2] # e.g. "/projects/p30791/methylation/data/meta.csv"
-  dout <- args[3] # e.g. "/projects/p30791/methylation/sesame_out/data_summary"
+  ddata <- args[1] # e.g. "/projects/p30791/methylation/sesame_data"
+  meta_fn <- args[2] # e.g. "/projects/p30791/methylation/raw_data/meta.csv"
+  dout <- args[3] # e.g. "/projects/p30791/methylation/data_summary"
 }
 
 # model from https://github.com/zhou-lab/InfiniumAnnotationV1/blob/main/Anno/EPIC/Clock_PhenoAge.rds # nolint
