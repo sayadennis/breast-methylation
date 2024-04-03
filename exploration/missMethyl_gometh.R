@@ -9,8 +9,8 @@ dout <- din
 probeset_names <- c(
   "hypo_in_TU_ER",
   "hyper_in_TU_ER",
-  "CUB_down_from_Normal",
-  "CUB_up_from_Normal",
+  "CUB_down_from_CFN",
+  "CUB_up_from_CFN",
   "AN_up_from_OQ",
   "AN_down_from_OQ",
   "TU_down_from_AN",

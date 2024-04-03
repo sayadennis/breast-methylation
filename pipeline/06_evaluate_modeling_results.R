@@ -9,7 +9,7 @@ plot_dir <- "/projects/p30791/methylation/plots"
 
 trends <- read.csv(paste0(din, "/dml_up_down_pairwise_trends.csv"))
 
-df <- trends %>% make_long("All.probes", "Normal.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
+df <- trends %>% make_long("All.probes", "CFN.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
 
 p <- ggplot(df, aes(
   x = x,
@@ -27,7 +27,7 @@ p <- ggplot(df, aes(
     legend.position = "none",
     axis.title.x = element_blank()
   ) +
-  scale_x_discrete(labels = c("All probes", "Normal vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
+  scale_x_discrete(labels = c("All probes", "CFN vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
 
 plot_filepath <- paste0(plot_dir, "/dml_sankey.png")
 ggsave(plot_filepath, plot = p, width = 10, height = 6)

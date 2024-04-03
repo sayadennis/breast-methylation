@@ -23,15 +23,21 @@ if not os.path.exists(plot_dir):
 if not os.path.exists(f"{dout}/all_probes_DM"):
     os.makedirs(f"{dout}/all_probes_DM")
 
-ref_comp_pairs = [
-    ("Normal", "CUB"),
+ref_comp_pairs_normals = [  # pairs to compare the normals
+    ("CFN", "TU"),
+    ("CUB", "TU"),
+    ("OQ", "TU"),
+    ("AN", "TU"),
+]
+ref_comp_pairs_tpx = [  # pairs along the tumor proximity axis
+    ("CFN", "CUB"),
     ("CUB", "OQ"),
     ("OQ", "AN"),
     ("AN", "TU"),
 ]
 
 dml_results, dmr_results = {}, {}
-for ref, comp in ref_comp_pairs:
+for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     # DML results
     dml_results[f"{ref} vs {comp}"] = pd.read_csv(
         f"{din}/DML_results_ref{ref}_comp{comp}.csv"
@@ -47,7 +53,7 @@ for ref, comp in ref_comp_pairs:
         index=False,
     )
 
-tissue_types = ["Normal", "CUB", "OQ", "AN", "TU"]
+tissue_types = ["CFN", "CUB", "OQ", "AN", "TU"]
 p_thres = 0.01
 effect_thres = 0.1
 
@@ -55,20 +61,27 @@ effect_thres = 0.1
 #### Count pairwise difference and prep for Sankey Plot ####
 ############################################################
 
-## Count up- and down-methylated probes between adjacent tissue categories
+## Count hyper- and hypo-methylated probes between adjacent tissue categories along TPX
 num_diff_probes = pd.DataFrame(
     0.0,
-    index=[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs],
+    index=[
+        f"{ref} vs {comp}"
+        for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
+    ],
     columns=["Higher", "Lower"],
 )
 trends = pd.DataFrame(
     index=list(
         set().union(*(df["Probe_ID"] for df in dml_results.values()))
     ),  # all probes
-    columns=["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs],
+    columns=["All probes"]
+    + [
+        f"{ref} vs {comp}"
+        for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
+    ],
 )
 
-for ref, comp in ref_comp_pairs:
+for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     p_vals = dml_results[f"{ref} vs {comp}"][f"Pval_Sample.Region{comp}"]
     p_vals.index = dml_results[f"{ref} vs {comp}"].Probe_ID
     # fix underflow (p=0) by replacing zero with non-zero minimum
@@ -98,16 +111,19 @@ trends.dropna(axis=0, how="all", inplace=True)
 trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
 trends.fillna("n.d.", inplace=True)
 
-trends.to_csv(f"{din}/dml_hyper_hypo_pairwise_trends.csv")
+trends[
+    ["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]
+].to_csv(f"{din}/dml_hyper_hypo_pairwise_trends.csv")
 
 # Save interesting probe sets to TXT file
 probe_sets = {}
-for ref, comp in ref_comp_pairs:
+for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     for trend in ["hyper", "hypo"]:
         probe_sets[f"{trend}_{ref}_vs_{comp}"] = list(
             trends.iloc[trends[f"{ref} vs {comp}"].values == trend].index
         )
 
+# These are only for comparisons along the TPX
 probe_sets["AN_down_and_TU_up"] = list(
     trends.iloc[
         (trends["OQ vs AN"].values == "hypo") & (trends["AN vs TU"].values == "hyper")
@@ -119,6 +135,7 @@ probe_sets["AN_up_and_TU_down"] = list(
     ].index
 )
 
+# Write probe sets to TXT files
 for key, probelist in probe_sets.items():
     with open(f"{dout}/probe_set_{key}.txt", "w", encoding="utf-8") as f:
         for item in probelist:
@@ -127,6 +144,11 @@ for key, probelist in probe_sets.items():
 #########################################################
 #### Group DML patterns across all tissue categories ####
 #########################################################
+
+# From here, we only focus on comparisons along the TPX
+trends = trends[
+    ["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]
+]
 
 #### Define set names and their specific patterns ####
 set_patterns = {
@@ -291,7 +313,7 @@ for i in range(max_patterns):
             axs[i, j].axvline(x, linestyle="--", linewidth=0.5, c="grey")
         if i == (max_patterns - 1):
             axs[i, j].set_xticklabels(
-                ["Normal", "CUB", "OQ", "AN", "TU"],
+                ["CFN", "CUB", "OQ", "AN", "TU"],
                 fontsize=12,
                 ha="right",
                 rotation=30,
@@ -394,7 +416,7 @@ seg_cols = [
     "Seg_Pval_adj",
 ]
 
-for ref, comp in ref_comp_pairs:
+for ref, comp in ref_comp_pairs_tpx:
     print(f"#### Comparison - {ref} vs {comp} ####")
     segs = dmr_results[f"{ref} vs {comp}"][seg_cols].drop_duplicates(ignore_index=True)
     segs.set_index("Seg_ID", drop=True, inplace=True)

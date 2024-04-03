@@ -32,8 +32,8 @@ meta.loc[:, "HER2"] = meta["HER2"].map(
 
 ## Create mappings between IDAT IDs, tissue category, and integers
 idat_to_region = dict(zip(meta["IDAT"], meta["Sample Region"]))
-label_int_mapping = {"Normal": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
-int_label_mapping = {0: "Normal", 1: "CUB", 2: "OQ", 3: "AN", 4: "TU"}
+label_int_mapping = {"CFN": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
+int_label_mapping = {0: "CFN", 1: "CUB", 2: "OQ", 3: "AN", 4: "TU"}
 int_color_mapping = {
     0: "slategray",
     1: "cornflowerblue",
@@ -155,7 +155,7 @@ plt.close()
 ################################
 
 # Only select cancer patients
-idat_cases = list(meta.iloc[meta["Sample Region"].values != "Normal", :].IDAT)
+idat_cases = list(meta.iloc[meta["Sample Region"].values != "CFN", :].IDAT)
 betas_cases = betas.iloc[:, [x in idat_cases for x in betas.columns]]
 
 ## Take only the top 5000 most variable probes
@@ -232,7 +232,7 @@ for feature_name, categories in tumormeta_to_plot.items():
             )
             # next plot samples that do belong to focus category
             for region, intlabel in label_int_mapping.items():
-                if region != "Normal":
+                if region != "CFN":
                     subset_data = foreground_samples[method].loc[
                         [
                             idat_to_region[idat_id] == region

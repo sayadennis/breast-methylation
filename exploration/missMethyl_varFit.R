@@ -2,7 +2,7 @@ library(sesame)
 library(minfi)
 library(missMethyl)
 
-dout <- "/projects/p30791/methylation/missMethylDiffVar"
+dout <- "/projects/p30791/methylation/differential_variability/missMethylDiffVar"
 
 if (!file.exists(dout)) {
   dir.create(dout)
@@ -10,16 +10,16 @@ if (!file.exists(dout)) {
 
 ## Load data
 betas <- read.table(
-  "/projects/p30791/methylation/sesame_out/betas_processed.csv",
+  "/projects/p30791/methylation/sesame_data/betas_processed.csv",
   row.names = 1, sep = ",", header = TRUE
 ) # nrows=2000 for testing
-meta <- read.csv("/projects/p30791/methylation/data/meta.csv")
+meta <- read.csv("/projects/p30791/methylation/raw_data/meta.csv")
 
 betas <- as.matrix(betas)
 meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 
-refs <- c("Normal", "Normal", "CUB", "OQ", "AN")
-comps <- c("AN", "CUB", "OQ", "AN", "TU")
+refs <- c("CFN", "CUB", "OQ", "CFN", "CFN", "CUB", "OQ", "AN")
+comps <- c("TU", "TU", "TU", "AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
   ref <- refs[i]

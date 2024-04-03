@@ -20,7 +20,7 @@ refgenefile="./refgenefiles/hg38.UCSC.add_miR.160920.refgene.mat"
 
 cd /projects/p30791/GISTIC2/
 
-for tissue_category in "Normal" "CUB" "OQ" "AN" "TU"
+for tissue_category in "CFN" "CUB" "OQ" "AN" "TU"
 do
     dout="/projects/p30791/methylation/sesame_out/copy_number/gistic2_out_$tissue_category"
     mkdir -p $dout
