@@ -8,7 +8,7 @@
 #SBATCH --job-name=modeling
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL
-#SBATCH --output=/projects/p30791/methylation/out/05_modeling.out
+#SBATCH --output=/projects/p30791/methylation/out/05_differential_methylation.out
 
 module purge all 
 module load R/4.3.0
@@ -16,5 +16,5 @@ module load R/4.3.0
 cd ~/breast-methylation/pipeline/
 
 mkdir -p /projects/p30791/methylation/differential_methylation/
-Rscript --vanilla 05_modeling.R
+Rscript --vanilla 05_differential_methylation.R
 
