@@ -1,27 +1,30 @@
 # pylint: disable=redefined-outer-name
 # pylint: disable=duplicate-code
 
+import json
 import os
 import re
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib.ticker import FuncFormatter
 from scipy.stats import false_discovery_control
 
 ######################################
 #### Load SeSAMe modeling results ####
 ######################################
 
-din = "/projects/p30791/methylation/differential_methylation"
-dout = din
+din_dm = "/projects/p30791/methylation/differential_methylation"
+din_dv = "/projects/p30791/methylation/differential_variability/missMethylDiffVar"
+dout_dm = din_dm
 plot_dir = "/projects/p30791/methylation/plots/differential_methylation"
 
 if not os.path.exists(plot_dir):
     os.makedirs(plot_dir)
 
-if not os.path.exists(f"{dout}/all_probes_DM"):
-    os.makedirs(f"{dout}/all_probes_DM")
+if not os.path.exists(f"{dout_dm}/all_probes_DM"):
+    os.makedirs(f"{dout_dm}/all_probes_DM")
 
 ref_comp_pairs_normals = [  # pairs to compare the normals
     ("CFN", "TU"),
@@ -40,22 +43,26 @@ dml_results, dmr_results = {}, {}
 for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     # DML results
     dml_results[f"{ref} vs {comp}"] = pd.read_csv(
-        f"{din}/DML_results_ref{ref}_comp{comp}.csv"
+        f"{din_dm}/DML_results_ref{ref}_comp{comp}.csv"
     )
     # DMR results
     dmr_results[f"{ref} vs {comp}"] = pd.read_csv(
-        f"{din}/DMR_results_Sample.Region{comp}_ref{ref}.csv"
+        f"{din_dm}/DMR_results_Sample.Region{comp}_ref{ref}.csv"
     )
     # While we're here, write the lists of all probe sets
     dml_results[f"{ref} vs {comp}"].Probe_ID.to_csv(
-        f"{dout}/all_probes_DM/all_probes_{ref}_vs_{comp}.txt",
+        f"{dout_dm}/all_probes_DM/all_probes_{ref}_vs_{comp}.txt",
         header=False,
         index=False,
     )
 
 tissue_types = ["CFN", "CUB", "OQ", "AN", "TU"]
-p_thres = 0.01
-effect_thres = 0.1
+
+with open("~/breast-methylation/pipeline/config.json", "r", encoding="utf-8") as f:
+    config = json.load(f)
+
+p_thres = config["p_thres"]
+effect_thres = config["effect_thres"]
 
 ############################################################
 #### Count pairwise difference and prep for Sankey Plot ####
@@ -104,7 +111,7 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     trends.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "hyper"
     trends.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "hypo"
 
-num_diff_probes.to_csv(f"{din}/number_dml_probes_btwn_categories.csv")
+num_diff_probes.to_csv(f"{din_dm}/number_dml_probes_btwn_categories.csv")
 print(num_diff_probes.to_markdown())  # printing for Wiki
 
 trends.dropna(axis=0, how="all", inplace=True)
@@ -113,33 +120,81 @@ trends.fillna("n.d.", inplace=True)
 
 trends[
     ["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]
-].to_csv(f"{din}/dml_hyper_hypo_pairwise_trends.csv")
+].to_csv(f"{din_dm}/dml_hyper_hypo_pairwise_trends.csv")
 
-# Save interesting probe sets to TXT file
-probe_sets = {}
+##############################################
+#### Bar graphs of number of DM/DV probes ####
+##############################################
+
+probesets = {}
+probesets["DM"] = {}
+probesets["DV"] = {}
+
 for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     for trend in ["hyper", "hypo"]:
-        probe_sets[f"{trend}_{ref}_vs_{comp}"] = list(
-            trends.iloc[trends[f"{ref} vs {comp}"].values == trend].index
-        )
+        # First get DM probes
+        with open(
+            f"{din_dm}/probe_set_{trend}_ref{ref}_comp{comp}.txt", "r", encoding="utf-8"
+        ) as f:
+            probesets["DM"][f"{trend}_ref{ref}_comp{comp}"] = [
+                x.strip() for x in f.readlines()
+            ]
+        # Next get DV probes
+        with open(
+            f"{din_dv}/{trend}DV_missMethyl_{ref}_vs_{comp}.txt", "r", encoding="utf-8"
+        ) as f:
+            probesets["DV"][f"{trend}_ref{ref}_comp{comp}"] = [
+                x.strip() for x in f.readlines()
+            ]
 
-# These are only for comparisons along the TPX
-probe_sets["AN_down_and_TU_up"] = list(
-    trends.iloc[
-        (trends["OQ vs AN"].values == "hypo") & (trends["AN vs TU"].values == "hyper")
-    ].index
-)
-probe_sets["AN_up_and_TU_down"] = list(
-    trends.iloc[
-        (trends["OQ vs AN"].values == "hyper") & (trends["AN vs TU"].values == "hypo")
-    ].index
-)
 
-# Write probe sets to TXT files
-for key, probelist in probe_sets.items():
-    with open(f"{dout}/probe_set_{key}.txt", "w", encoding="utf-8") as f:
-        for item in probelist:
-            f.write(f"{item}\n")
+def format_ticks(x):
+    """
+    Function to facilitate changing format of y tick labels.
+    """
+    return "{:,.0f}".format(x)  # pylint: disable=consider-using-f-string
+
+
+colors = ["slategray", "cornflowerblue", "forestgreen", "goldenrod"]
+
+for identifier, pairs in zip(
+    ["normals", "tpx"], [ref_comp_pairs_normals, ref_comp_pairs_tpx]
+):
+    fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(5.5, 7))
+    # Plot bar graphs
+    for i, analysis in enumerate(["DM", "DV"]):
+        for j, trend in enumerate(["Hyper", "Hypo"]):
+            axs[i, j].bar(
+                np.arange(4),
+                [
+                    len(probesets[analysis][f"{trend.lower()}_ref{ref}_comp{comp}"])
+                    for ref, comp in pairs
+                ],
+                width=1.0,
+                edgecolor="black",
+                linewidth=1.5,
+                color=colors,
+            )
+            axs[i, j].spines["top"].set_visible(False)
+            axs[i, j].spines["right"].set_visible(False)
+            axs[i, j].set_xticks(np.arange(4))
+            axs[i, j].set_xticklabels(
+                [f"{ref} vs {comp}" for ref, comp in pairs], ha="right", rotation=30
+            )
+            axs[i, j].yaxis.set_major_formatter(FuncFormatter(format_ticks))
+            if j == 0:
+                axs[i, j].set_ylabel("Number of Probes")
+    # Add figure labels
+    fig.text(0.03, 0.75, "DM", rotation=90, va="center", ha="center", fontsize=16)
+    fig.text(0.03, 0.28, "DV", rotation=90, va="center", ha="center", fontsize=16)
+    fig.text(0.38, 0.97, "Hyper", rotation=0, va="center", ha="center", fontsize=16)
+    fig.text(0.82, 0.97, "Hypo", rotation=0, va="center", ha="center", fontsize=16)
+    # Set margins for text
+    plt.tight_layout()
+    plt.subplots_adjust(left=0.22, top=0.95)
+    # Save
+    fig.savefig(f"{plot_dir}/bar_num_dm_dv_{identifier}.png")
+    plt.close()
 
 #########################################################
 #### Group DML patterns across all tissue categories ####
@@ -196,7 +251,7 @@ for setname, pattern in set_patterns.items():
 #### Write probe sets to TXT files ####
 for setname, probes in probesets.items():
     setname_file = re.sub(r"[-\s]", "_", setname)
-    with open(f"{dout}/probe_set_{setname_file}.txt", "w", encoding="utf-8") as f:
+    with open(f"{dout_dm}/probe_set_{setname_file}.txt", "w", encoding="utf-8") as f:
         for probe in probes:
             f.write(f"{probe}\n")
 
@@ -365,7 +420,9 @@ for pattern_name in [
 
 for tissue_category in ["CUB", "OQ", "AN", "TU"]:
     for biomarker in ["ER", "HER2"]:
-        dml = pd.read_csv(f"{din}/DML_results_of_{tissue_category}_by_{biomarker}.csv")
+        dml = pd.read_csv(
+            f"{din_dm}/DML_results_of_{tissue_category}_by_{biomarker}.csv"
+        )
         dml = dml.iloc[[x.startswith("cg") for x in dml.Probe_ID], :]
         # obtain slope and p-values
         slope = dml[f"Est_{biomarker}Positive"]
@@ -387,7 +444,7 @@ for tissue_category in ["CUB", "OQ", "AN", "TU"]:
         neg_sig_probes = list(neg_sig.iloc[neg_sig.values].index)
         if len(pos_sig_probes) > 0:
             with open(
-                f"{dout}/probe_set_hyper_in_{tissue_category}_{biomarker}.txt",
+                f"{dout_dm}/probe_set_hyper_in_{tissue_category}_{biomarker}.txt",
                 "w",
                 encoding="utf-8",
             ) as f:
@@ -395,7 +452,7 @@ for tissue_category in ["CUB", "OQ", "AN", "TU"]:
                     f.write(f"{item}\n")
         if len(neg_sig_probes) > 0:
             with open(
-                f"{dout}/probe_set_hypo_in_{tissue_category}_{biomarker}.txt",
+                f"{dout_dm}/probe_set_hypo_in_{tissue_category}_{biomarker}.txt",
                 "w",
                 encoding="utf-8",
             ) as f:
