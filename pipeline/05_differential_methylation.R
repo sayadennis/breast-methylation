@@ -1,3 +1,4 @@
+library(rjson)
 library(sesame)
 library(SummarizedExperiment)
 library(dplyr)
@@ -13,6 +14,10 @@ dout <- "/projects/p30791/methylation/differential_methylation"
 #### Load and prep data ####
 ############################
 
+config <- fromJSON(file = "~/breast-methylation/pipeline/config.json")
+p_thres <- config$p_thres
+effect_thres <- config$effect_thres
+
 ## Load data
 betas <- read.table(
   paste0(sesame_dir, "/betas_processed.csv"),
@@ -22,6 +27,36 @@ meta <- read.csv(paste0(raw_dir, "/meta.csv"))
 
 betas <- as.matrix(betas)
 meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
+
+##########################
+#### Define functions ####
+##########################
+
+get_probe_sets <- function(test_result, p_thres, effect_thres, pval_colname, slope_colname) {
+  # Define boolean vector for significance
+  pvals <- test_result[[pval_colname]]
+  pvals[is.na(pvals)] <- 0.99 # fill NA with non-significant number
+  pvals[pvals == 0] <- min(pvals[pvals != 0]) # fix underflow
+  significant_bool <- p.adjust(pvals, method = "BH") < p_thres
+
+  # Get hyper and hypo methylated probe IDs
+  significant_hyper <- test_result[
+    significant_bool & (test_result[[slope_colname]] >= effect_thres), "Probe_ID"
+  ]
+  significant_hypo <- test_result[
+    significant_bool & (test_result[[slope_colname]] <= (-1) * effect_thres), "Probe_ID"
+  ]
+
+  # Convert to characterstring vectors
+  significant_hyper <- as.character(significant_hyper[[1]])
+  significant_hypo <- as.character(significant_hypo[[1]])
+
+  # Return as named list
+  list(
+    hyper = significant_hyper,
+    hypo = significant_hypo
+  )
+}
 
 ##############################################################
 #### Differential methylation analysis by tissue category ####
@@ -53,12 +88,34 @@ for (i in seq_along(refs)) {
     )
   )
   test_result <- summaryExtractTest(smry)
+  # Save all results
   write.csv(
     test_result,
     paste0(
       dout, "/DML_results_ref", ref, "_comp", comp, ".csv"
     ),
     quote = FALSE, row.names = FALSE
+  )
+
+  # Save significant probes
+  pval_colname <- paste0("Pval_Sample.Region", comp)
+  slope_colname <- paste0("Est_Sample.Region", comp)
+
+  probe_sets <- get_probe_sets(
+    test_result = test_result,
+    p_thres = p_thres,
+    effect_thres = effect_thres,
+    pval_colname = pval_colname,
+    slope_colname = slope_colname
+  )
+
+  writeLines(
+    probe_sets$hyper,
+    paste0(dout, "/probe_set_hyper_ref", ref, "_comp", comp, ".txt")
+  )
+  writeLines(
+    probe_sets$hypo,
+    paste0(dout, "/probe_set_hypo_ref", ref, "_comp", comp, ".txt")
   )
 
   ## DMR (Differentially methylated regions)
@@ -106,13 +163,16 @@ for (i in seq_along(refs)) {
     # Subset metadata and betas by ER status
     meta_sub_er <- meta_sub[meta_sub$ER == er_status, ]
     betas_sub_er <- betas_sub[, paste0("X", meta_sub_er$IDAT)]
+
     # Exclude probes that are missing levels on sample region etc.
     cpg_ok <- checkLevels(betas_sub_er, meta_sub_er$Sample.Region)
     print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
     betas_sub_cpgfilter <- betas_sub_er[cpg_ok, ]
+
     # Run DML
     smry <- DML(betas_sub_cpgfilter, ~ Sample.Region + Age, meta = meta_sub_er)
     test_result <- summaryExtractTest(smry)
+
     # Save results
     write.csv(
       test_result,
@@ -120,6 +180,27 @@ for (i in seq_along(refs)) {
         dout, "/DML_results_ER", er_status, "_only_", ref, "_vs_", comp, ".csv"
       ),
       quote = FALSE, row.names = FALSE
+    )
+
+    # Save significant probes
+    pval_colname <- paste0("Pval_Sample.Region", comp)
+    slope_colname <- paste0("Est_Sample.Region", comp)
+
+    probe_sets <- get_probe_sets(
+      test_result = test_result,
+      p_thres = p_thres,
+      effect_thres = effect_thres,
+      pval_colname = pval_colname,
+      slope_colname = slope_colname
+    )
+
+    writeLines(
+      probe_sets$hyper,
+      paste0(dout, "/probe_set_hyper_ER", er_status, "_ref", ref, "_comp", comp, ".txt")
+    )
+    writeLines(
+      probe_sets$hypo,
+      paste0(dout, "/probe_set_hypo_ER", er_status, "_ref", ref, "_comp", comp, ".txt")
     )
   }
 }
@@ -176,6 +257,41 @@ for (tissue_category in comps) {
         dout, "/DML_results_of_", tissue_category, "_by_", contrast_feature, ".csv"
       ),
       quote = FALSE, row.names = FALSE
+    )
+    # Save significant probes
+    pval_colname <- paste0("Pval_", contrast_feature, "Positive")
+    slope_colname <- paste0("Est_", contrast_feature, "Positive")
+
+    probe_sets <- get_probe_sets(
+      test_result = test_result,
+      p_thres = p_thres,
+      effect_thres = effect_thres,
+      pval_colname = pval_colname,
+      slope_colname = slope_colname
+    )
+
+    # Write probe sets
+    writeLines(
+      probe_sets$hyper,
+      paste0(
+        dout,
+        "/probe_set_hyper_",
+        contrast_feature,
+        "_neg_vs_pos_in_",
+        tissue_category,
+        ".txt"
+      )
+    )
+    writeLines(
+      probe_sets$hypo,
+      paste0(
+        dout,
+        "/probe_set_hyper_",
+        contrast_feature,
+        "_neg_vs_pos_in_",
+        tissue_category,
+        ".txt"
+      )
     )
   }
 }
