@@ -4,6 +4,7 @@
 import json
 import os
 import re
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -58,7 +59,9 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
 
 tissue_types = ["CFN", "CUB", "OQ", "AN", "TU"]
 
-with open("~/breast-methylation/pipeline/config.json", "r", encoding="utf-8") as f:
+with open(
+    f"{str(Path.home())}/breast-methylation/pipeline/config.json", "r", encoding="utf-8"
+) as f:
     config = json.load(f)
 
 p_thres = config["p_thres"]
@@ -148,7 +151,7 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
             ]
 
 
-def format_ticks(x):
+def format_ticks(x, pos):  # pylint: disable=unused-argument
     """
     Function to facilitate changing format of y tick labels.
     """

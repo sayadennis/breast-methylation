@@ -7,7 +7,7 @@ space <- 30000
 din <- "/projects/p30791/methylation/differential_methylation"
 plot_dir <- "/projects/p30791/methylation/plots"
 
-trends <- read.csv(paste0(din, "/dml_up_down_pairwise_trends.csv"))
+trends <- read.csv(paste0(din, "/dml_hyper_hypo_pairwise_trends.csv"))
 
 df <- trends %>% make_long("All.probes", "CFN.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
 
