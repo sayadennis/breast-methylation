@@ -144,7 +144,7 @@ axs[2].set_ylabel("UMAP-2")
 
 axs[2].set_title("UMAP", fontsize=14)
 
-fig.suptitle("Sample Clustering via Beta Values", fontsize=16)
+fig.suptitle("Sample Clustering via Global Methylation Levels", fontsize=16)
 
 plt.tight_layout()
 fig.savefig(f"{dout}/clustering_by_sample_betas.png")
@@ -259,7 +259,9 @@ for feature_name, categories in tumormeta_to_plot.items():
                 axs[i, j].set_ylabel(f"{feature_name}={category}", fontsize=14)
             if i == 0:
                 axs[i, j].set_title(method, fontsize=14)
-    fig.suptitle(f"Clustering by beta values separated by {feature_name}", fontsize=16)
+    fig.suptitle(
+        f"Clustering by methylation levels separated by {feature_name}", fontsize=16
+    )
     plt.tight_layout()
     feature_name = feature_name.replace(
         " ", "_"
