@@ -29,38 +29,51 @@ if (!file.exists(plot_dir)) {
 
 ## Read the query probe sets
 probeset_names <- c(
-  "hypo_in_TU_HER2",
-  "hypo_in_TU_ER",
-  "hyper_in_TU_ER",
-  "hyper_CFN_vs_CUB",
-  "hypo_CFN_vs_CUB",
-  "hyper_OQ_vs_AN",
-  "hypo_OQ_vs_AN",
-  "hyper_AN_vs_TU",
-  "hypo_AN_vs_TU",
-  "AN_up_and_TU_down",
-  "AN_down_and_TU_up",
-  "Monotonic_increase_A",
-  "Monotonic_increase_B",
-  "Monotonic_increase_C",
-  "Monotonic_increase_D",
-  "Monotonic_increase_E",
-  "Monotonic_decrease_A",
-  "Monotonic_decrease_B",
-  "Monotonic_decrease_C",
-  "Monotonic_decrease_D",
-  "Monotonic_decrease_E",
-  "Non_monotonic_valley_A",
-  "Non_monotonic_valley_B",
-  "Non_monotonic_valley_C",
-  "Non_monotonic_valley_D",
-  "Non_monotonic_valley_E",
-  "Non_monotonic_hill_A",
-  "Non_monotonic_hill_B",
-  "Non_monotonic_hill_C",
-  "Non_monotonic_hill_D",
-  "Non_monotomic_mixed_A",
-  "Non_monotomic_mixed_B"
+  # Comparisons between normals
+  "hyper_refCFN_compTU",
+  "hyper_refCUB_compTU",
+  "hyper_refOQ_compTU",
+  "hyper_refAN_compTU",
+  "hypo_refCFN_compTU",
+  "hypo_refCUB_compTU",
+  "hypo_refOQ_compTU",
+  "hypo_refAN_compTU",
+  # Comparisons along TPX
+  "hyper_refCFN_compCUB",
+  "hyper_refCUB_compOQ",
+  "hyper_refOQ_compAN",
+  "hypo_refCFN_compCUB",
+  "hypo_refCUB_compOQ",
+  "hypo_refOQ_compAN",
+  # "hypo_refAN_compTU",
+  # Biomarker-related comparisons
+  "hypo_ER-_refAN_compTU",
+  "hyper_ER-_refAN_compTU",
+  "hypo_ER+_refAN_compTU",
+  "hyper_ER+_refAN_compTU"
+  #   "hyper_ER_neg_vs_pos_in_TU",
+  #   # Global pattern probe sets
+  #   "Monotonic_increase_A",
+  #   "Monotonic_increase_B",
+  #   "Monotonic_increase_C",
+  #   "Monotonic_increase_D",
+  #   "Monotonic_increase_E",
+  #   "Monotonic_decrease_A",
+  #   "Monotonic_decrease_B",
+  #   "Monotonic_decrease_C",
+  #   "Monotonic_decrease_D",
+  #   "Monotonic_decrease_E",
+  #   "Non_monotonic_valley_A",
+  #   "Non_monotonic_valley_B",
+  #   "Non_monotonic_valley_C",
+  #   "Non_monotonic_valley_D",
+  #   "Non_monotonic_valley_E",
+  #   "Non_monotonic_hill_A",
+  #   "Non_monotonic_hill_B",
+  #   "Non_monotonic_hill_C",
+  #   "Non_monotonic_hill_D",
+  #   "Non_monotomic_mixed_A",
+  #   "Non_monotomic_mixed_B"
 )
 
 probe_sets <- list()
@@ -143,9 +156,15 @@ for (setname in probeset_names) {
   }
 
   # Test enrichment for genes
+  gene_dbs <- KYCG_buildGeneDBs(query, max_distance = 100000, platform = "EPIC")
+
+  if (length(gene_dbs) == 0) {
+    next
+  }
+
   results <- testEnrichment(
     query,
-    KYCG_buildGeneDBs(query, max_distance = 100000, platform = "EPIC"),
+    gene_dbs,
     platform = "EPIC"
   )
   results <- results[results$p.value < 0.05, ]
