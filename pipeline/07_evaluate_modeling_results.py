@@ -175,7 +175,7 @@ for identifier, pairs in zip(
                 ],
                 width=1.0,
                 edgecolor="black",
-                linewidth=1.5,
+                linewidth=1,
                 color=colors,
             )
             axs[i, j].spines["top"].set_visible(False)
