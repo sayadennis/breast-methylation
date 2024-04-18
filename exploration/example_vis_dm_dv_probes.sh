@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH -A p31931
+#SBATCH -A p30791
 #SBATCH -p normal
-#SBATCH -t 12:00:00
+#SBATCH -t 1:00:00
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH --mem=72G
+#SBATCH --mem=12G
 #SBATCH --job-name=dummyvis
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL
