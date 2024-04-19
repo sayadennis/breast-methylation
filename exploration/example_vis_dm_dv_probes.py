@@ -1,4 +1,5 @@
 # pylint: disable=redefined-outer-name
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -55,7 +56,20 @@ meta = meta.iloc[[x in betas.columns for x in meta.IDAT.values], :]
 meta.set_index("IDAT", drop=False, inplace=True)
 
 
-def select_probes(ref: str, comp: str, num_each: int = 4):
+def select_probes(
+    ref: str, comp: str, num_each: int = 4
+) -> Tuple[List[str], List[str]]:
+    """
+    Function to get a list of top DM/DV probes for plotting.
+
+    Arguments:
+        ref: The reference category
+        comp: The comparison category
+        num_each: The number of probes to return per each analysis (DM/DV) and hyper/hypo.
+
+    Returns:
+        A tuple of length 2, each a list of probe names for DM and DV respectively.
+    """
     dm = dm_results[f"{ref}_vs_{comp}"].sort_values(f"Pval_Sample.Region{comp}")
     pvals = dm[f"Pval_Sample.Region{comp}"].fillna(0.99)
     nonzero_min = min(pvals.iloc[pvals.values != 0])
@@ -80,6 +94,42 @@ def select_probes(ref: str, comp: str, num_each: int = 4):
     dm = hyper_dm[:num_each] + hypo_dm[:num_each]
     dv = hyper_dv[:num_each] + hypo_dv[:num_each]
     return (dm, dv)
+
+
+def melt_data(
+    probe_list_dm: List[str], probe_list_dv: List[str], betas: pd.DataFrame
+) -> Tuple[pd.DataFrame, pd.DataFrame]:
+    """
+    Function to created melted data for plotting Seaborn swarm/violin plots.
+    """
+    seaborn_data = betas.loc[
+        probe_list_dm + probe_list_dv,
+        meta.iloc[
+            [x in [ref, comp] for x in meta["Sample Region"].values], :
+        ].IDAT.values,
+    ]
+    seaborn_data = pd.concat(
+        (
+            seaborn_data,
+            pd.DataFrame(
+                meta.loc[seaborn_data.columns, "Sample Region"].values.reshape(1, -1),
+                index=["Sample Region"],
+                columns=seaborn_data.columns,
+            ),
+        ),
+        axis=0,
+    ).T
+
+    dm_plot_data = seaborn_data[probe_list_dm + ["Sample Region"]]
+    dm_melted = dm_plot_data.melt(
+        id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
+    )
+
+    dv_plot_data = seaborn_data[probe_list_dv + ["Sample Region"]]
+    dv_melted = dv_plot_data.melt(
+        id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
+    )
+    return (dm_melted, dv_melted)
 
 
 for ref, comp in ref_comp_pairs_tpx:
@@ -151,33 +201,7 @@ for ref, comp in ref_comp_pairs_tpx:
     #### Plot swarm plots ####
     ##########################
 
-    seaborn_data = betas.loc[
-        probe_list_dm + probe_list_dv,
-        meta.iloc[
-            [x in [ref, comp] for x in meta["Sample Region"].values], :
-        ].IDAT.values,
-    ]
-    seaborn_data = pd.concat(
-        (
-            seaborn_data,
-            pd.DataFrame(
-                meta.loc[seaborn_data.columns, "Sample Region"].values.reshape(1, -1),
-                index=["Sample Region"],
-                columns=seaborn_data.columns,
-            ),
-        ),
-        axis=0,
-    ).T
-
-    dm_plot_data = seaborn_data[probe_list_dm + ["Sample Region"]]
-    dm_melted = dm_plot_data.melt(
-        id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
-    )
-
-    dv_plot_data = seaborn_data[probe_list_dv + ["Sample Region"]]
-    dv_melted = dv_plot_data.melt(
-        id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
-    )
+    dm_melted, dv_melted = melt_data(probe_list_dm, probe_list_dv, betas)
 
     fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(num_each * 4, 8))
 
@@ -217,33 +241,7 @@ for ref, comp in ref_comp_pairs_tpx:
     #### Plot violin plots ####
     ###########################
 
-    seaborn_data = betas.loc[
-        probe_list_dm + probe_list_dv,
-        meta.iloc[
-            [x in [ref, comp] for x in meta["Sample Region"].values], :
-        ].IDAT.values,
-    ]
-    seaborn_data = pd.concat(
-        (
-            seaborn_data,
-            pd.DataFrame(
-                meta.loc[seaborn_data.columns, "Sample Region"].values.reshape(1, -1),
-                index=["Sample Region"],
-                columns=seaborn_data.columns,
-            ),
-        ),
-        axis=0,
-    ).T
-
-    dm_plot_data = seaborn_data[probe_list_dm + ["Sample Region"]]
-    dm_melted = dm_plot_data.melt(
-        id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
-    )
-
-    dv_plot_data = seaborn_data[probe_list_dv + ["Sample Region"]]
-    dv_melted = dv_plot_data.melt(
-        id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
-    )
+    dm_melted, dv_melted = melt_data(probe_list_dm, probe_list_dv, betas)
 
     fig, axs = plt.subplots(nrows=2, ncols=1, figsize=(num_each * 2.5, 8))
 
