@@ -115,3 +115,82 @@ for (i in 1:nrows) {
 }
 
 write.csv(cts, file = paste0(dout, "/TFBS_hits_probe_overlaps.csv"), row.names = FALSE)
+
+####################################################
+#### Collect gene count and overlap information ####
+####################################################
+
+cts <- data.frame(matrix(
+  c(
+    # hypo in CUB and TU
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "ZNF217", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "AHR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "TLE3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GREB1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GRHL2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "ESR1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "PR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "FOSL2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "AR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GATA3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "NR3C1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "HES2", 0, 0, 0, 0, 0., 0., 0.,
+    # hyper in AN and TU
+    "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "CDCA2", 0, 0, 0, 0, 0., 0., 0.,
+    "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "ATF7IP", 0, 0, 0, 0, 0., 0., 0.,
+    "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "ZFP57", 0, 0, 0, 0, 0., 0., 0.,
+    # mixed
+    "hyper", "hypo", "refOQ_compAN", "refOQ_compAN", "CNOT3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hyper", "refCFN_compCUB", "refAN_compTU", "TEAD1", 0, 0, 0, 0, 0., 0., 0.
+  ),
+  ncol = length(cols),
+  byrow = TRUE
+))
+colnames(cts) <- cols
+
+nrows <- dim(cts)[1]
+
+txnranges <- sesameData_getTxnGRanges(sesameData_check_genome(NULL, platform = "EPIC"))
+protein_coding_genes <- unique(
+  data.frame(txnranges[txnranges$transcript_type == "protein_coding", ])[["gene_name"]]
+)
+
+for (i in 1:nrows) {
+  # Get the probe set names
+  left_name <- paste0(cts[i, "left_trend"], "_", cts[i, "left_comparison"])
+  right_name <- paste0(cts[i, "right_trend"], "_", cts[i, "right_comparison"])
+  # Get all probes in comparisons
+  left_probes_all <- probe_sets[[left_name]]
+  right_probes_all <- probe_sets[[right_name]]
+  # Get probes that overlap with TFBS
+  tf <- cts[i, "TF"]
+  tf_probes <- db[[tf]]
+  left_probes <- intersect(left_probes_all, tf_probes)
+  right_probes <- intersect(right_probes_all, tf_probes)
+  # Get gene lists
+  left_res <- testEnrichmentGene(left_probes, platform = "EPIC")
+  right_res <- testEnrichmentGene(right_probes, platform = "EPIC")
+  left_sig_genes <- left_res[left_res$FDR < 0.05, "gene_name"]
+  right_sig_genes <- right_res[right_res$FDR < 0.05, "gene_name"]
+  left_sig_genes <- intersect(left_sig_genes, protein_coding_genes)
+  right_sig_genes <- intersect(right_sig_genes, protein_coding_genes)
+  # count the set sizes
+  left_only_size <- length(setdiff(left_sig_genes, right_sig_genes))
+  right_only_size <- length(setdiff(right_sig_genes, left_sig_genes))
+  overlap_size <- length(intersect(left_sig_genes, right_sig_genes))
+  # Calculate percentages
+  total <- length(unique(c(left_sig_genes, right_sig_genes)))
+  left_only_pct <- 100 * left_only_size / total
+  overlap_pct <- 100 * overlap_size / total
+  right_only_pct <- 100 * right_only_size / total
+  # Record to dataframe
+  cts[i, "left_only_size"] <- left_only_size
+  cts[i, "overlap_size"] <- overlap_size
+  cts[i, "right_only_size"] <- right_only_size
+  cts[i, "total"] <- total
+  cts[i, "left_only_pct"] <- left_only_pct
+  cts[i, "overlap_pct"] <- overlap_pct
+  cts[i, "right_only_pct"] <- right_only_pct
+}
+
+write.csv(cts, file = paste0(dout, "/TFBS_hits_gene_overlaps.csv"), row.names = FALSE)
