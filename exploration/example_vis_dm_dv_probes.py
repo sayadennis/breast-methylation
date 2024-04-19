@@ -54,11 +54,8 @@ meta = meta.iloc[[x in betas.columns for x in meta.IDAT.values], :]
 
 meta.set_index("IDAT", drop=False, inplace=True)
 
-for ref, comp in ref_comp_pairs_tpx:
-    ###############################
-    #### Select probes to plot ####
-    ###############################
 
+def select_probes(ref: str, comp: str, num_each: int = 4):
     dm = dm_results[f"{ref}_vs_{comp}"].sort_values(f"Pval_Sample.Region{comp}")
     pvals = dm[f"Pval_Sample.Region{comp}"].fillna(0.99)
     nonzero_min = min(pvals.iloc[pvals.values != 0])
@@ -75,25 +72,28 @@ for ref, comp in ref_comp_pairs_tpx:
         .values
     )
 
-    # hyper_dm = ['cg00241081', 'cg00034409', 'cg00028595', 'cg00006600']
-    # hypo_dm = ['cg00169897', 'cg00214628', 'cg00173014', 'cg00046575']
-
     dv = dv_results[f"{ref}_vs_{comp}"]
     dv = dv.iloc[dv["Adj.P.Value"].values < 0.01, :]
     hyper_dv = list(dv.iloc[dv["LogVarRatio"].values > 1, :].iloc[:5, :].index)
     hypo_dv = list(dv.iloc[dv["LogVarRatio"].values < -1, :].iloc[:5, :].index)
 
-    # hyper_dv = ['cg00146085', 'cg00121634', 'cg00139242', 'cg00062873']
-    # hypo_dv = ['cg00077264', 'cg00113195', 'cg00242299', 'cg00088464']
+    dm = hyper_dm[:num_each] + hypo_dm[:num_each]
+    dv = hyper_dv[:num_each] + hypo_dv[:num_each]
+    return (dm, dv)
+
+
+for ref, comp in ref_comp_pairs_tpx:
+    ###############################
+    #### Select probes to plot ####
+    ###############################
+
+    probe_list_dm, probe_list_dv = select_probes(ref, comp, num_each)
 
     #########################
     #### Plot histograms ####
     #########################
 
     fig, axs = plt.subplots(nrows=2, ncols=2 * num_each, figsize=(num_each * 4, 8))
-
-    probe_list_dm = hyper_dm[:num_each] + hypo_dm[:num_each]
-    probe_list_dv = hyper_dv[:num_each] + hypo_dv[:num_each]
 
     ref_idats = meta.iloc[meta["Sample Region"].values == ref, :].IDAT.values
     comp_idats = meta.iloc[meta["Sample Region"].values == comp, :].IDAT.values
@@ -152,10 +152,7 @@ for ref, comp in ref_comp_pairs_tpx:
     ##########################
 
     seaborn_data = betas.loc[
-        hyper_dm[:num_each]
-        + hypo_dm[:num_each]
-        + hyper_dv[:num_each]
-        + hypo_dv[:num_each],
+        probe_list_dm + probe_list_dv,
         meta.iloc[
             [x in [ref, comp] for x in meta["Sample Region"].values], :
         ].IDAT.values,
@@ -172,16 +169,12 @@ for ref, comp in ref_comp_pairs_tpx:
         axis=0,
     ).T
 
-    dm_plot_data = seaborn_data[
-        hyper_dm[:num_each] + hypo_dm[:num_each] + ["Sample Region"]
-    ]
+    dm_plot_data = seaborn_data[probe_list_dm + ["Sample Region"]]
     dm_melted = dm_plot_data.melt(
         id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
     )
 
-    dv_plot_data = seaborn_data[
-        hyper_dv[:num_each] + hypo_dv[:num_each] + ["Sample Region"]
-    ]
+    dv_plot_data = seaborn_data[probe_list_dv + ["Sample Region"]]
     dv_melted = dv_plot_data.melt(
         id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
     )
@@ -225,10 +218,7 @@ for ref, comp in ref_comp_pairs_tpx:
     ###########################
 
     seaborn_data = betas.loc[
-        hyper_dm[:num_each]
-        + hypo_dm[:num_each]
-        + hyper_dv[:num_each]
-        + hypo_dv[:num_each],
+        probe_list_dm + probe_list_dv,
         meta.iloc[
             [x in [ref, comp] for x in meta["Sample Region"].values], :
         ].IDAT.values,
@@ -245,16 +235,12 @@ for ref, comp in ref_comp_pairs_tpx:
         axis=0,
     ).T
 
-    dm_plot_data = seaborn_data[
-        hyper_dm[:num_each] + hypo_dm[:num_each] + ["Sample Region"]
-    ]
+    dm_plot_data = seaborn_data[probe_list_dm + ["Sample Region"]]
     dm_melted = dm_plot_data.melt(
         id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
     )
 
-    dv_plot_data = seaborn_data[
-        hyper_dv[:num_each] + hypo_dv[:num_each] + ["Sample Region"]
-    ]
+    dv_plot_data = seaborn_data[probe_list_dv + ["Sample Region"]]
     dv_melted = dv_plot_data.melt(
         id_vars=["Sample Region"], var_name="cg_column", value_name="Beta values"
     )
