@@ -4,7 +4,7 @@ library(ggplot2)
 library(gridExtra)
 
 din <- "/projects/p30791/methylation/differential_methylation"
-dout <- "/projects/p30791/methylation/plots"
+dout <- din
 
 ## Read the query probe sets
 probeset_names <- c(
@@ -174,10 +174,14 @@ for (i in 1:nrows) {
   right_sig_genes <- right_res[right_res$FDR < 0.05, "gene_name"]
   left_sig_genes <- intersect(left_sig_genes, protein_coding_genes)
   right_sig_genes <- intersect(right_sig_genes, protein_coding_genes)
+  # get unique and overlapping genes
+  left_only_genes <- setdiff(left_sig_genes, right_sig_genes)
+  right_only_genes <- setdiff(right_sig_genes, left_sig_genes)
+  overlap_genes <- intersect(left_sig_genes, right_sig_genes)
   # count the set sizes
-  left_only_size <- length(setdiff(left_sig_genes, right_sig_genes))
-  right_only_size <- length(setdiff(right_sig_genes, left_sig_genes))
-  overlap_size <- length(intersect(left_sig_genes, right_sig_genes))
+  left_only_size <- length(left_only_genes)
+  right_only_size <- length(right_only_genes)
+  overlap_size <- length(overlap_genes)
   # Calculate percentages
   total <- length(unique(c(left_sig_genes, right_sig_genes)))
   left_only_pct <- 100 * left_only_size / total
@@ -191,6 +195,13 @@ for (i in 1:nrows) {
   cts[i, "left_only_pct"] <- left_only_pct
   cts[i, "overlap_pct"] <- overlap_pct
   cts[i, "right_only_pct"] <- right_only_pct
+  # write genes to TXT
+  writeLines(left_only_genes, paste0(dout, "/genes_", tf, "_hits_", left_name, "_only.txt"))
+  writeLines(right_only_genes, paste0(dout, "/genes_", tf, "_hits_", right_name, "_only.txt"))
+  writeLines(
+    overlap_genes,
+    paste0(dout, "/genes_overlap_", tf, "_hits_", left_name, "_AND_", right_name, "_only.txt")
+  )
 }
 
 write.csv(cts, file = paste0(dout, "/TFBS_hits_gene_overlaps.csv"), row.names = FALSE)

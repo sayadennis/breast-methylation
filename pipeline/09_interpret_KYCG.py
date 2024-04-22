@@ -4,10 +4,10 @@ import numpy as np
 import pandas as pd
 
 probe_or_gene = "probe"
+din = "/projects/p30791/methylation/differential_methylation"
+dout = "/projects/p30791/methylation/plots"
 
-data = pd.read_csv(
-    f"/projects/p30791/methylation/plots/TFBS_hits_{probe_or_gene}_overlaps.csv"
-)
+data = pd.read_csv(f"{din}/TFBS_hits_{probe_or_gene}_overlaps.csv")
 
 chunks = data[
     ["left_trend", "right_trend", "left_comparison", "right_comparison"]
@@ -90,5 +90,5 @@ fig.suptitle(
 
 plt.tight_layout()
 plt.subplots_adjust(wspace=0.8, hspace=1.2)
-fig.savefig(f"/projects/p30791/methylation/plots/TFBS_{probe_or_gene}_overlaps.png")
+fig.savefig(f"{dout}/TFBS_{probe_or_gene}_overlaps.png")
 plt.close()

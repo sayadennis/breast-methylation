@@ -91,6 +91,12 @@ for (db_id in dbs$Title) {
   db_list[[db_id]] <- KYCG_getDBs(db_id)
 }
 
+## Get protein coding genes
+txnranges <- sesameData_getTxnGRanges(sesameData_check_genome(NULL, platform = "EPIC"))
+protein_coding_genes <- unique(
+  data.frame(txnranges[txnranges$transcript_type == "protein_coding", ])[["gene_name"]]
+)
+
 ########################################################
 #### Categorical vs Categorical Enrichment Analysis ####
 ########################################################
@@ -169,6 +175,7 @@ for (setname in probeset_names) {
   )
   results <- results[results$p.value < 0.05, ]
   results <- results[results$estimate > fold_enrichment_thres, ]
+  results <- results[results$gene_name %in% protein_coding_genes, ]
 
   if (dim(results)[1] > 0) {
     # Fix rows where p-value and FDR-adjusted p-values suffer from underflow
