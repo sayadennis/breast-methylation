@@ -120,8 +120,8 @@ for (setname in probeset_names) {
 
     # Select statistically significant results
     db_name <- strsplit(db_id, "\\.")[[1]][3]
-    # Apply p-value threshold
-    results <- results[results$p.value < 0.05, ]
+    # Apply q-value threshold
+    results <- results[results$FDR < 0.05, ]
     # For ease of interpretation, we are only keeping enrichment and discarding depletion
     results <- results[results$estimate > fold_enrichment_thres, ]
 
@@ -130,7 +130,7 @@ for (setname in probeset_names) {
       next
     }
 
-    # Fix rows where p-value and FDR-adjusted p-values suffer from underflow
+    # Fix rows where p-value and FDR-adjusted p-values (q-value) suffer from underflow
     min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
     results$p.value[results$p.value == 0] <- min_nonzero_value
 
@@ -173,18 +173,13 @@ for (setname in probeset_names) {
     gene_dbs,
     platform = "EPIC"
   )
-  results <- results[results$p.value < 0.05, ]
-  results <- results[results$estimate > fold_enrichment_thres, ]
-  results <- results[results$gene_name %in% protein_coding_genes, ]
+  results <- results[
+    (results$FDR < 0.05) &
+      (results$estimate > fold_enrichment_thres) &
+      (results$gene_name %in% protein_coding_genes),
+  ]
 
   if (dim(results)[1] > 0) {
-    # Fix rows where p-value and FDR-adjusted p-values suffer from underflow
-    min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
-    results$p.value[results$p.value == 0] <- min_nonzero_value
-
-    min_nonzero_value <- min(results$FDR[results$FDR > 0], na.rm = TRUE)
-    results$FDR[results$FDR == 0] <- min_nonzero_value
-
     file_path <- paste0(dout, "/testEnrichment_", setname, "_genes.csv")
     write.csv(results, file_path, row.names = FALSE)
   }

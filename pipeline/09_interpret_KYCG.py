@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
-probe_or_gene = "probe"
+probe_or_gene = "gene"
 din = "/projects/p30791/methylation/differential_methylation"
 dout = "/projects/p30791/methylation/plots"
 
