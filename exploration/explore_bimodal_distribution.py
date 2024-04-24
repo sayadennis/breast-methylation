@@ -46,6 +46,7 @@ meta = meta.iloc[[x in betas.columns for x in meta.IDAT.values], :]
 
 meta.set_index("IDAT", drop=False, inplace=True)
 
+ref = "AN"
 comp = "TU"
 dv = dv_results[f"{ref}_vs_{comp}"]
 dv = dv.iloc[dv["Adj.P.Value"].values < 0.01, :]
