@@ -204,4 +204,15 @@ for (i in 1:nrows) {
   )
 }
 
+## Get genes targeted by PRC2 components of hypermethylation TFBS hits
+for (tf in c("JARID2", "TCF21", "EZH2", "SUZ12")) {
+  probes_all <- probe_sets[["hyper_refAN_compTU"]]
+  tf_probes <- db[[tf]]
+  probes <- intersect(probes_all, tf_probes)
+  res <- testEnrichmentGene(probes, platform = "EPIC")
+  sig_genes <- res[res$FDR < 0.05, "gene_name"]
+  sig_genes <- intersect(sig_genes, protein_coding_genes)
+  writeLines(sig_genes, paste0(dout, "/genes_", tf, "_hits_hyper_refAN_compTU.txt"))
+}
+
 write.csv(cts, file = paste0(dout, "/TFBS_hits_gene_overlaps.csv"), row.names = FALSE)
