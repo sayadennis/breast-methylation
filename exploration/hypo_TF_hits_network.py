@@ -32,8 +32,8 @@ for i in hits.index:
         genes[right_comparison][tf] = [line.strip() for line in f.readlines()]
     with open(
         (
-            f"{din}/genes_overlap_{tf}_hits_{trend}_{left_comparison}",
-            f"_AND_{trend}_{right_comparison}_only.txt",
+            f"{din}/genes_overlap_{tf}_hits_{trend}_{left_comparison}"
+            f"_AND_{trend}_{right_comparison}_only.txt"
         ),
         "r",
         encoding="utf-8",
