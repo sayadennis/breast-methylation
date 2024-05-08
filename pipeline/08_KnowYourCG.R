@@ -162,7 +162,7 @@ for (setname in probeset_names) {
   }
 
   # Test enrichment for genes
-  gene_dbs <- KYCG_buildGeneDBs(query, max_distance = 100000, platform = "EPIC")
+  gene_dbs <- KYCG_buildGeneDBs(query, max_distance = 10000, platform = "EPIC")
 
   if (length(gene_dbs) == 0) {
     next
