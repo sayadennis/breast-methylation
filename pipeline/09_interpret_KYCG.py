@@ -3,6 +3,38 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 
+################################################################
+#### Create gene-only TXT files for gene enrichment results ####
+################################################################
+
+din = "/projects/p30791/methylation/differential_methylation/KYCG"
+dout = din
+
+probe_set_names = [
+    "hyper_ER-_refAN_compTU",
+    "hyper_ER+_refAN_compTU",
+    "hypo_ER-_refAN_compTU",
+    "hypo_ER+_refAN_compTU",
+    "hyper_refCFN_compCUB",
+    "hypo_refCFN_compCUB",
+    "hyper_refOQ_compAN",
+    "hypo_refOQ_compAN",
+    "hyper_refAN_compTU",
+    "hypo_refAN_compTU",
+]
+
+for setname in probe_set_names:
+    genes_df = pd.read_csv(f"{din}/testEnrichment_{setname}_genes.csv")
+    genes = genes_df.gene_name.values
+    with open(f"{dout}/genes_{setname}.txt", "w") as f:
+        for gene in genes:
+            f.write(f"{gene}\n")
+
+###########################################################
+#### Plot horizontal bar graphs showing gene/probe overlaps
+#### driving TFBS hits in CFN/CUB and AN/TU comparison ####
+###########################################################
+
 probe_or_gene = "gene"
 din = "/projects/p30791/methylation/differential_methylation"
 dout = "/projects/p30791/methylation/plots"
