@@ -2,25 +2,21 @@ library(sesame)
 library(minfi)
 library(missMethyl)
 
-din <- "/projects/p30791/methylation/sesame_out/differential_methylation"
+din <- "/projects/p30791/methylation/differential_methylation"
 dout <- din
 
 ## Read the query probe sets
 probeset_names <- c(
-  "hypo_in_TU_ER",
-  "hyper_in_TU_ER",
-  "CUB_down_from_CFN",
-  "CUB_up_from_CFN",
-  "AN_up_from_OQ",
-  "AN_down_from_OQ",
-  "TU_down_from_AN",
-  "TU_up_from_AN",
-  "Monotonic_increase_A",
-  "Monotonic_increase_B",
-  "Monotonic_increase_C",
-  "Monotonic_decrease_A",
-  "Monotonic_decrease_B",
-  "Monotonic_decrease_C"
+  "hyper_ER-_refAN_compTU",
+  "hyper_ER+_refAN_compTU",
+  "hypo_ER-_refAN_compTU",
+  "hypo_ER+_refAN_compTU",
+  "hyper_refCFN_compCUB",
+  "hypo_refCFN_compCUB",
+  "hyper_refOQ_compAN",
+  "hypo_refOQ_compAN",
+  "hyper_refAN_compTU",
+  "hypo_refAN_compTU"
 )
 
 probe_sets <- list()
