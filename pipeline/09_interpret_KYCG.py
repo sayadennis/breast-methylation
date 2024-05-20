@@ -2,6 +2,7 @@ import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+from matplotlib_venn import venn2
 
 ################################################################
 #### Create gene-only TXT files for gene enrichment results ####
@@ -124,3 +125,31 @@ plt.tight_layout()
 plt.subplots_adjust(wspace=0.8, hspace=1.2)
 fig.savefig(f"{dout}/TFBS_{probe_or_gene}_overlaps.png")
 plt.close()
+
+######################################################################
+#### Plot Venn diagrams for ER+ vs ER- hyper/hypo-methylated CpGs ####
+######################################################################
+
+din = "/projects/p30791/methylation/differential_methylation"
+dout = "/projects/p30791/methylation/plots"
+
+probes = {}
+for trend in ["hyper", "hypo"]:
+    probes[trend] = {}
+    for er_status in ["ER+", "ER-"]:
+        with open(f"{din}/probe_set_{trend}_{er_status}_refAN_compTU.txt", "r") as f:
+            probes[trend][er_status] = [line.strip() for line in f.readlines()]
+
+for trend in ["hyper", "hypo"]:
+    er_pos = set(probes[trend]["ER+"])
+    er_neg = set(probes[trend]["ER-"])
+    total_size = len(er_pos.union(er_neg))
+    pos_only = len(er_pos - er_neg)
+    overlap = len(er_pos.intersection(er_neg))
+    neg_only = len(er_neg - er_pos)
+    venn2(
+        subsets=(pos_only, neg_only, overlap),
+        set_labels=("Samples from\nER+ patients", "Samples from\nER- patients"),
+    )
+    plt.savefig(f"{dout}/CpG_overlap_{trend}_ER_pos_vs_neg.png")
+    plt.close()
