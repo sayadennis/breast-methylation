@@ -50,7 +50,7 @@ probeset_names <- c(
   "hypo_ER-_refAN_compTU",
   "hyper_ER-_refAN_compTU",
   "hypo_ER+_refAN_compTU",
-  "hyper_ER+_refAN_compTU"
+  "hyper_ER+_refAN_compTU",
   #   "hyper_ER_neg_vs_pos_in_TU",
   #   # Global pattern probe sets
   #   "Monotonic_increase_A",
@@ -63,7 +63,7 @@ probeset_names <- c(
   #   "Monotonic_decrease_C",
   #   "Monotonic_decrease_D",
   #   "Monotonic_decrease_E",
-  #   "Non_monotonic_valley_A",
+  "Non_monotonic_valley_A"
   #   "Non_monotonic_valley_B",
   #   "Non_monotonic_valley_C",
   #   "Non_monotonic_valley_D",
