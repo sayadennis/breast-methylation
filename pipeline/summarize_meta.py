@@ -343,33 +343,62 @@ num_meta = meta[["ID", "Case/Control", "Age", "BMI"]].drop_duplicates(
 age_max, age_min = max(meta["Age"]), min(meta["Age"])
 bmi_max, bmi_min = max(meta["BMI"]), min(meta["BMI"])
 
+
+def add_mean_sd(i: int, j: int, data: pd.Series):
+    """
+    Add the text with mean and SD to [i, j] axes.
+    """
+    mean = data.mean()
+    sd = data.std()
+    ax[i, j].text(
+        0.65,
+        0.85,
+        f"Mean {mean:.1f}\n(±{sd:.1f} SD)",
+        transform=ax[i, j].transAxes,
+        fontsize=10,
+        verticalalignment="bottom",
+        multialignment="center",
+        bbox={
+            "boxstyle": "round",
+            "facecolor": "white",
+            "edgecolor": "grey",
+            "alpha": 0.7,
+        },
+    )
+
+
 fig, ax = plt.subplots(3, 2, figsize=(8, 6))
 
 ## Age
 ax[0, 0].hist(num_meta["Age"], bins=np.arange(age_min, age_max), color="tab:gray")
+add_mean_sd(0, 0, num_meta["Age"])
 ax[1, 0].hist(
     num_meta.iloc[num_meta["Case/Control"].values == "case", :]["Age"],
     bins=np.arange(age_min, age_max),
     color="tab:pink",
 )
+add_mean_sd(1, 0, num_meta.iloc[num_meta["Case/Control"].values == "case", :]["Age"])
 ax[2, 0].hist(
     num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["Age"],
     bins=np.arange(age_min, age_max),
     color="tab:cyan",
 )
+add_mean_sd(2, 0, num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["Age"])
 ax[2, 0].set_xlabel("Age")
 
 ax[0, 0].set_title("Age", fontsize=14)
 
 for i, label in enumerate(["All", "Cases", "Normals"]):
     ax[i, 0].set_xlim(age_min - 5, age_max + 5)
-    ax[i, 0].set_ylabel(label, fontsize=14)
     ax[i, 0].spines["top"].set_visible(False)
     ax[i, 0].spines["right"].set_visible(False)
 
 fig.text(
     0.03, 0.5, "Number of patients", rotation=90, va="center", ha="center", fontsize=14
 )
+fig.text(0.06, 0.25, "All", rotation=90, va="center", ha="center", fontsize=14)
+fig.text(0.06, 0.5, "Cases", rotation=90, va="center", ha="center", fontsize=14)
+fig.text(0.06, 0.75, "Normals", rotation=90, va="center", ha="center", fontsize=14)
 
 ## BMI
 ax[0, 1].hist(
@@ -377,16 +406,19 @@ ax[0, 1].hist(
     bins=np.arange(np.floor(bmi_min), np.ceil(bmi_max)),
     color="tab:gray",
 )
+add_mean_sd(0, 1, num_meta["BMI"])
 ax[1, 1].hist(
     num_meta.iloc[num_meta["Case/Control"].values == "case", :]["BMI"],
     bins=np.arange(np.floor(bmi_min), np.ceil(bmi_max)),
     color="tab:pink",
 )
+add_mean_sd(1, 1, num_meta.iloc[num_meta["Case/Control"].values == "case", :]["BMI"])
 ax[2, 1].hist(
     num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["BMI"],
     bins=np.arange(np.floor(bmi_min), np.ceil(bmi_max)),
     color="tab:cyan",
 )
+add_mean_sd(2, 1, num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["BMI"])
 ax[2, 1].set_xlabel("BMI")
 
 ax[0, 1].set_title("BMI", fontsize=14)
