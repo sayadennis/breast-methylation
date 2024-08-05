@@ -2,7 +2,7 @@ library(sesame)
 library(minfi)
 library(missMethyl)
 
-dout <- "/projects/p30791/methylation/differential_variability/missMethylDiffVar"
+dout <- "/projects/p30791/methylation/differential_variability"
 
 if (!file.exists(dout)) {
   dir.create(dout)
@@ -38,7 +38,7 @@ for (i in seq_along(refs)) {
   print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
   betas_sub <- betas_sub[cpg_ok, ]
 
-  ## Exclude probes that include any missing values (too strict but testing quick & dirty for now)
+  ## Exclude probes that include any missing values
   keep <- apply(betas_sub, 1, function(row) all(!is.na(row)))
   betas_sub <- betas_sub[keep, ]
   print("Finished narrowing down CpGs of interest!")
@@ -63,10 +63,10 @@ for (i in seq_along(refs)) {
   print("Done! Writing top DV probe IDs to TXT...")
   writeLines(
     rownames(topDV[(topDV["Adj.P.Value"] < 0.05) & (topDV["LogVarRatio"] > 0.2), ]),
-    paste0(dout, "/hyperDV_missMethyl_", ref, "_vs_", comp, ".txt")
+    paste0(dout, "/probe_set_hyperDV_missMethyl_", ref, "_vs_", comp, ".txt")
   )
   writeLines(
     rownames(topDV[(topDV["Adj.P.Value"] < 0.05) & (topDV["LogVarRatio"] < -0.2), ]),
-    paste0(dout, "/hypoDV_missMethyl_", ref, "_vs_", comp, ".txt")
+    paste0(dout, "/probe_set_hypoDV_missMethyl_", ref, "_vs_", comp, ".txt")
   )
 }
