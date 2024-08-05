@@ -19,6 +19,6 @@ cd ~/breast-methylation/pipeline/
 mkdir -p /projects/p30791/methylation/differential_methylation/
 python 07_evaluate_modeling_results.py
 
-module loar R/4.3.0
+module load R/4.3.0
 
 Rscript --vanilla 07_evaluate_modeling_results.R

@@ -146,9 +146,11 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
         with open(
             f"{din_dv}/{trend}DV_missMethyl_{ref}_vs_{comp}.txt", "r", encoding="utf-8"
         ) as f:
-            probesets["DV"][f"{trend}_ref{ref}_comp{comp}"] = [
-                x.strip() for x in f.readlines()
-            ]
+            dv_probes = [x.strip() for x in f.readlines()]
+            dv_but_not_dm_probes = list(
+                set(dv_probes) - set(probesets["DM"][f"{trend}_ref{ref}_comp{comp}"])
+            )
+            probesets["DV"][f"{trend}_ref{ref}_comp{comp}"] = dv_but_not_dm_probes
 
 
 def format_ticks(x, pos):  # pylint: disable=unused-argument
@@ -259,7 +261,8 @@ for setname, probes in probesets.items():
             f.write(f"{probe}\n")
 
 
-#### Plot dummy vis with number of probes ####
+#### Plot arrow graph to show global patterns across TPX ####
+
 pattern_names = [
     "Monotonic increase",
     "Monotonic decrease",
@@ -267,24 +270,39 @@ pattern_names = [
     "Non-monotonic \nup & down",
     "Non-monotonic mixed",
 ]
-max_patterns = 5
+n_patterns = {
+    "Monotonic increase": 5,
+    "Monotonic decrease": 5,
+    "Non-monotonic \ndown & up": 5,
+    "Non-monotonic \nup & down": 4,
+    "Non-monotonic mixed": 2,
+}
+max_patterns = np.max(list(n_patterns.values()))
+
+coords = {
+    "nd": {"x": -0.25, "y": 0.0, "dx": 0.5, "dy": 0.0},
+    "hyper": {"x": -0.25, "y": -0.15, "dx": 0.5, "dy": 0.3},
+    "hypo": {"x": -0.25, "y": 0.15, "dx": 0.5, "dy": -0.3},
+}
+
+colors = {
+    "nd": "gray",
+    "hyper": "magenta",
+    "hypo": "cyan",
+}
 
 fig, axs = plt.subplots(
     nrows=max_patterns,
     ncols=len(pattern_names),
-    figsize=(3 * len(pattern_names), 1.5 * max_patterns),
+    figsize=(3 * len(pattern_names), 1.1 * max_patterns),
 )
 
 
-def add_num(i: int, j: int, setname: str):
-    """
-    Add the text with number of probes to the [i, j] axes.
-    """
-    num_probes = len(probesets[setname])
+def add_num(i, j, text):
     axs[i, j].text(
         0.05,
         0.85,
-        f"{num_probes:,} probes",
+        f"{text} probes",
         transform=axs[i, j].transAxes,
         fontsize=10,
         verticalalignment="bottom",
@@ -298,57 +316,51 @@ def add_num(i: int, j: int, setname: str):
     )
 
 
+def plot_arrows_and_num(i: int, j: int, pattern: list, num: int):
+    for k, trend in enumerate(pattern):
+        axs[i, j].arrow(
+            coords[trend]["x"] + 0.5 + k,
+            coords[trend]["y"],
+            coords[trend]["dx"],
+            coords[trend]["dy"],
+            color=colors[trend],
+            width=0.05,
+            head_width=0.2,
+            length_includes_head=True,
+        )
+        add_num(i, j, f"{num:,}")
+
+
 ## Monotonic increase
-axs[0, 0].plot(np.arange(5), [0, 0, 0, 0, 1], linestyle="-", marker="o", c="black")
-add_num(0, 0, "Monotonic increase A")
-axs[1, 0].plot(np.arange(5), [0, 1, 1, 1, 1], linestyle="-", marker="o", c="black")
-add_num(1, 0, "Monotonic increase B")
-axs[2, 0].plot(np.arange(5), [0, 1, 1, 1, 2], linestyle="-", marker="o", c="black")
-add_num(2, 0, "Monotonic increase C")
-axs[3, 0].plot(np.arange(5), [0, 0, 0, 1, 1], linestyle="-", marker="o", c="black")
-add_num(3, 0, "Monotonic increase D")
-axs[4, 0].plot(np.arange(5), [0, 1, 1, 2, 2], linestyle="-", marker="o", c="black")
-add_num(4, 0, "Monotonic increase E")
+plot_arrows_and_num(0, 0, ["nd", "nd", "nd", "hyper"], 33698)
+plot_arrows_and_num(1, 0, ["hyper", "nd", "nd", "nd"], 739)
+plot_arrows_and_num(2, 0, ["hyper", "nd", "nd", "hyper"], 142)
+plot_arrows_and_num(3, 0, ["nd", "nd", "hyper", "hyper"], 38)
+plot_arrows_and_num(4, 0, ["hyper", "nd", "hyper", "nd"], 6)
 
 ## Monotonic decrease
-axs[0, 1].plot(np.arange(5), [0, 0, 0, 0, -1], linestyle="-", marker="o", c="black")
-add_num(0, 1, "Monotonic decrease A")
-axs[1, 1].plot(np.arange(5), [0, -1, -1, -1, -1], linestyle="-", marker="o", c="black")
-add_num(1, 1, "Monotonic decrease B")
-axs[2, 1].plot(np.arange(5), [0, -1, -1, -1, -2], linestyle="-", marker="o", c="black")
-add_num(2, 1, "Monotonic decrease C")
-axs[3, 1].plot(np.arange(5), [0, 0, 0, -1, -1], linestyle="-", marker="o", c="black")
-add_num(3, 1, "Monotonic decrease D")
-axs[4, 1].plot(np.arange(5), [0, -1, -1, -2, -2], linestyle="-", marker="o", c="black")
-add_num(4, 1, "Monotonic decrease E")
+plot_arrows_and_num(0, 1, ["nd", "nd", "nd", "hypo"], 53800)
+plot_arrows_and_num(1, 1, ["hypo", "nd", "nd", "nd"], 34882)
+plot_arrows_and_num(2, 1, ["hypo", "nd", "nd", "hypo"], 7672)
+plot_arrows_and_num(3, 1, ["nd", "nd", "hypo", "hypo"], 5)
+plot_arrows_and_num(4, 1, ["hypo", "nd", "hypo", "nd"], 6)
 
 ## Non-monotonic down and up
-axs[0, 2].plot(np.arange(5), [0, -1, -1, -1, 0], linestyle="-", marker="o", c="black")
-add_num(0, 2, "Non-monotonic valley A")
-axs[1, 2].plot(np.arange(5), [0, 0, 0, -1, 0], linestyle="-", marker="o", c="black")
-add_num(1, 2, "Non-monotonic valley B")
-axs[2, 2].plot(np.arange(5), [0, -1, -1, -2, -1], linestyle="-", marker="o", c="black")
-add_num(2, 2, "Non-monotonic valley C")
-axs[3, 2].plot(np.arange(5), [0, -1, -1, 0, 0], linestyle="-", marker="o", c="black")
-add_num(3, 2, "Non-monotonic valley D")
-axs[4, 2].plot(np.arange(5), [0, -1, -1, 0, 1], linestyle="-", marker="o", c="black")
-add_num(4, 2, "Non-monotonic valley E")
+plot_arrows_and_num(0, 2, ["hypo", "nd", "nd", "hyper"], 6379)
+plot_arrows_and_num(1, 2, ["nd", "nd", "hypo", "hyper"], 27)
+plot_arrows_and_num(2, 2, ["hypo", "nd", "hypo", "hyper"], 45)
+plot_arrows_and_num(3, 2, ["hypo", "nd", "hyper", "nd"], 25)
+plot_arrows_and_num(4, 2, ["hypo", "nd", "hyper", "hyper"], 3)
 
 ## Non-monotonic up and down
-axs[0, 3].plot(np.arange(5), [0, 1, 1, 1, 0], linestyle="-", marker="o", c="black")
-add_num(0, 3, "Non-monotonic hill A")
-axs[1, 3].plot(np.arange(5), [0, 0, 0, 1, 0], linestyle="-", marker="o", c="black")
-add_num(1, 3, "Non-monotonic hill B")
-axs[2, 3].plot(np.arange(5), [0, 1, 1, 2, 1], linestyle="-", marker="o", c="black")
-add_num(2, 3, "Non-monotonic hill C")
-axs[3, 3].plot(np.arange(5), [0, 1, 1, 0, 0], linestyle="-", marker="o", c="black")
-add_num(3, 3, "Non-monotonic hill D")
+plot_arrows_and_num(0, 3, ["hyper", "nd", "nd", "hypo"], 56)
+plot_arrows_and_num(1, 3, ["nd", "nd", "hyper", "hypo"], 76)
+plot_arrows_and_num(2, 3, ["hyper", "nd", "hyper", "hypo"], 8)
+plot_arrows_and_num(3, 3, ["hyper", "nd", "hypo", "nd"], 2)
 
 ## Non-monotonic mixed
-axs[0, 4].plot(np.arange(5), [0, -1, -1, 0, -1], linestyle="-", marker="o", c="black")
-add_num(0, 4, "Non-monotonic mixed A")
-axs[1, 4].plot(np.arange(5), [0, 1, 1, 0, 1], linestyle="-", marker="o", c="black")
-add_num(1, 4, "Non-monotonic mixed B")
+plot_arrows_and_num(0, 4, ["hypo", "nd", "hyper", "hypo"], 29)
+plot_arrows_and_num(1, 4, ["hyper", "nd", "hypo", "hyper"], 4)
 
 for i in range(max_patterns):
     for j, pattern_name in enumerate(pattern_names):
@@ -356,31 +368,29 @@ for i in range(max_patterns):
         axs[i, j].spines["top"].set_visible(False)
         axs[i, j].spines["bottom"].set_visible(False)
         axs[i, j].spines["left"].set_visible(False)
-        axs[i, j].set_ylim(-2.25, 2.25)
+        axs[i, j].set_ylim(-0.5, 0.5)
         axs[i, j].set_yticks([])
         axs[i, j].set_yticklabels([])
-        axs[i, j].set_xlim(-0.25, 4.25)
+        axs[i, j].set_xlim(-0.5, 4.5)
         axs[i, j].set_xticks(np.arange(5))
         # add horizontal lines
-        axs[i, j].axhline(2, linestyle="--", linewidth=0.5, c="magenta")
-        axs[i, j].axhline(1, linestyle="--", linewidth=0.5, c="magenta")
-        axs[i, j].axhline(0, linestyle="--", linewidth=1.0, c="black")
-        axs[i, j].axhline(-1, linestyle="--", linewidth=0.5, c="cyan")
-        axs[i, j].axhline(-2, linestyle="--", linewidth=0.5, c="cyan")
-        for x in [0, 1, 2, 3, 4]:
-            axs[i, j].axvline(x, linestyle="--", linewidth=0.5, c="grey")
+        axs[i, j].axhline(
+            0.0, linestyle="--", linewidth=1.0, c="grey", zorder=1, alpha=0.5
+        )
         if i == (max_patterns - 1):
             axs[i, j].set_xticklabels(
-                ["CFN", "CUB", "OQ", "AN", "TU"],
-                fontsize=12,
-                ha="right",
-                rotation=30,
+                ["CFN", "CUB", "OQ", "AN", "TU"], fontsize=12, ha="center", rotation=30
             )
         else:
             axs[i, j].set_xticklabels([])
-        # if first panel, add column title
+        # add vertical lines
+        for x in [0, 1, 2, 3, 4]:
+            axs[i, j].axvline(x, linestyle="--", linewidth=0.5, c="grey")
+        # set aspect ratio
+        axs[i, j].set_aspect("equal")
+        # if top row, set pattern titles
         if i == 0:
-            axs[i, j].set_title(pattern_name, fontsize=14)
+            axs[i, j].set_title(pattern_name + "\n", fontsize=14)
         # if left-most column, add labels
         if j == 0:
             axs[i, j].set_ylabel(
@@ -392,7 +402,8 @@ for i in range(max_patterns):
             )
 
 plt.tight_layout()
-fig.savefig(f"{plot_dir}/patterns_across_tissues.png")
+plt.subplots_adjust(left=0.05, top=0.90)
+fig.savefig(f"{plot_dir}/patterns_across_tissues_arrows.png")
 plt.close()
 
 ###################################################################
