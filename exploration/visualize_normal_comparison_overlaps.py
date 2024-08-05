@@ -9,7 +9,7 @@ dv_din = "/projects/p30791/methylation/differential_variability/missMethylDiffVa
 dout = "/projects/p30791/methylation/plots"
 
 setnames = [
-    "Normal_vs_TU",
+    "CFN_vs_TU",
     "CUB_vs_TU",
     "OQ_vs_TU",
     "AN_vs_TU",
