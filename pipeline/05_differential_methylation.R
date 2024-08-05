@@ -28,6 +28,9 @@ meta <- read.csv(paste0(raw_dir, "/meta.csv"))
 betas <- as.matrix(betas)
 meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 
+# Mean imputation for BMI's missing values (control during DM analysis)
+meta$BMI <- ifelse(is.na(meta$BMI), mean(meta$BMI, na.rm = TRUE), meta$BMI)
+
 ##########################
 #### Define functions ####
 ##########################
@@ -80,7 +83,7 @@ for (i in seq_along(refs)) {
   betas_sub <- betas_sub[cpg_ok, ]
 
   ## Differential methylation analysis
-  smry <- DML(betas_sub, ~ Sample.Region + Age, meta = meta_sub) # cant control for BMI
+  smry <- DML(betas_sub, as.formula("~ Sample.Region + Age + BMI"), meta = meta_sub)
   saveRDS(
     smry,
     paste0(
@@ -145,11 +148,11 @@ for (i in seq_along(refs)) {
 # nolint end
 
 ###################################################################
-#### Differential methylation AN vs. TU separated by ER status ####
+#### Differential methylation along TPX separated by ER status ####
 ###################################################################
 
-refs <- c("AN")
-comps <- c("TU")
+refs <- c("CUB", "OQ", "AN")
+comps <- c("OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
   ref <- refs[i]
@@ -162,6 +165,7 @@ for (i in seq_along(refs)) {
   for (er_status in unique(meta_sub$ER)) {
     # Subset metadata and betas by ER status
     meta_sub_er <- meta_sub[meta_sub$ER == er_status, ]
+    meta_sub_er$Sample.Region <- relevel(factor(meta_sub_er$Sample.Region), ref)
     betas_sub_er <- betas_sub[, paste0("X", meta_sub_er$IDAT)]
 
     # Exclude probes that are missing levels on sample region etc.
@@ -170,7 +174,7 @@ for (i in seq_along(refs)) {
     betas_sub_cpgfilter <- betas_sub_er[cpg_ok, ]
 
     # Run DML
-    smry <- DML(betas_sub_cpgfilter, ~ Sample.Region + Age, meta = meta_sub_er)
+    smry <- DML(betas_sub_cpgfilter, as.formula("~ Sample.Region + Age + BMI"), meta = meta_sub_er)
     test_result <- summaryExtractTest(smry)
 
     # Save results
@@ -205,9 +209,9 @@ for (i in seq_along(refs)) {
   }
 }
 
-#############################################################
-#### Differential methylation analysis by tumor metadata ####
-#############################################################
+#########################################################################################
+#### Differential methylation between same tissue types separated by tumor biomarker ####
+#########################################################################################
 
 comps <- c("CUB", "OQ", "AN", "TU")
 
@@ -245,7 +249,7 @@ for (tissue_category in comps) {
     print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
     betas_sub_cpgfilter <- betas_sub[cpg_ok, ]
     # Create formula string with contrast feature to plug into DML
-    formula_string <- paste("~", contrast_feature, "+ Age")
+    formula_string <- paste("~", contrast_feature, "+ Age + BMI")
     formula_expression <- as.formula(formula_string)
     # Run DML
     smry <- DML(betas_sub_cpgfilter, formula_expression, meta = meta_sub)
