@@ -1,0 +1,42 @@
+{
+    "differential_methylation" : [
+        "hyper_refCFN_compTU",
+        "hyper_refCUB_compTU",
+        "hyper_refOQ_compTU",
+        "hyper_refAN_compTU",
+        "hypo_refCFN_compTU",
+        "hypo_refCUB_compTU",
+        "hypo_refOQ_compTU",
+        "hypo_refAN_compTU",
+        "hyper_refCFN_compCUB",
+        "hyper_refCUB_compOQ",
+        "hyper_refOQ_compAN",
+        "hypo_refCFN_compCUB",
+        "hypo_refCUB_compOQ",
+        "hypo_refOQ_compAN",
+        "hypo_refAN_compTU",
+        "hypo_ER-_refAN_compTU",
+        "hyper_ER-_refAN_compTU",
+        "hypo_ER+_refAN_compTU",
+        "hyper_ER+_refAN_compTU",
+        "hyper_ER_neg_vs_pos_in_TU",
+        "Non_monotonic_valley_A"
+    ],
+    "differential_variability" : [
+        "hyperDV_missMethyl_CFN_vs_CUB",
+        "hyperDV_missMethyl_CUB_vs_OQ",
+        "hyperDV_missMethyl_OQ_vs_AN",
+        "hyperDV_missMethyl_AN_vs_TU",
+        "hyperDV_missMethyl_OQ_vs_TU",
+        "hyperDV_missMethyl_CUB_vs_TU",
+        "hyperDV_missMethyl_CFN_vs_TU",
+        "hypoDV_missMethyl_CFN_vs_CUB",
+        "hypoDV_missMethyl_CUB_vs_OQ",
+        "hypoDV_missMethyl_OQ_vs_AN",
+        "hypoDV_missMethyl_AN_vs_TU",
+        "hypoDV_missMethyl_OQ_vs_TU",
+        "hypoDV_missMethyl_CUB_vs_TU",
+        "hypoDV_missMethyl_CFN_vs_TU"
+    ]
+}
+
