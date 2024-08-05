@@ -15,5 +15,5 @@ module load R/4.3.0
 
 cd ~/breast-methylation/pipeline/
 
-Rscript --vanilla 08_KnowYourCG.R "/projects/p30791/methylation/differential_methylation" "/projects/p30791/methylation/differential_methylation/KYCG" "/projects/p30791/methylation/plots/differential_methylation"
+Rscript --vanilla 08_KnowYourCG.R "probesets.json" "/projects/p30791/methylation/differential_methylation/KYCG" "/projects/p30791/methylation/plots/differential_methylation"
 

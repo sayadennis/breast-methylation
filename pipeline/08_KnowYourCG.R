@@ -1,4 +1,5 @@
 library(stringr)
+library(jsonlite)
 library(sesame)
 library(ggplot2)
 
@@ -12,7 +13,7 @@ if (length(args) != 3) {
     call. = FALSE
   )
 } else {
-  din <- args[1] # e.g. "/projects/p30791/methylation/differential_methylation"
+  probe_paths_json <- args[1] # e.g. "/home/srd6051/breast-methylation/pipeline/probesets.json"
   dout <- args[2] # e.g. "/projects/p30791/methylation/differential_methylation/KYCG"
   plot_dir <- args[3] # e.g. "/projects/p30791/methylation/plots/differential_methylation"
 }
@@ -28,59 +29,18 @@ if (!file.exists(plot_dir)) {
 }
 
 ## Read the query probe sets
-probeset_names <- c(
-  # Comparisons between normals
-  "hyper_refCFN_compTU",
-  "hyper_refCUB_compTU",
-  "hyper_refOQ_compTU",
-  "hyper_refAN_compTU",
-  "hypo_refCFN_compTU",
-  "hypo_refCUB_compTU",
-  "hypo_refOQ_compTU",
-  "hypo_refAN_compTU",
-  # Comparisons along TPX
-  "hyper_refCFN_compCUB",
-  "hyper_refCUB_compOQ",
-  "hyper_refOQ_compAN",
-  "hypo_refCFN_compCUB",
-  "hypo_refCUB_compOQ",
-  "hypo_refOQ_compAN",
-  # "hypo_refAN_compTU",
-  # Biomarker-related comparisons
-  "hypo_ER-_refAN_compTU",
-  "hyper_ER-_refAN_compTU",
-  "hypo_ER+_refAN_compTU",
-  "hyper_ER+_refAN_compTU",
-  #   "hyper_ER_neg_vs_pos_in_TU",
-  #   # Global pattern probe sets
-  #   "Monotonic_increase_A",
-  #   "Monotonic_increase_B",
-  #   "Monotonic_increase_C",
-  #   "Monotonic_increase_D",
-  #   "Monotonic_increase_E",
-  #   "Monotonic_decrease_A",
-  #   "Monotonic_decrease_B",
-  #   "Monotonic_decrease_C",
-  #   "Monotonic_decrease_D",
-  #   "Monotonic_decrease_E",
-  "Non_monotonic_valley_A"
-  #   "Non_monotonic_valley_B",
-  #   "Non_monotonic_valley_C",
-  #   "Non_monotonic_valley_D",
-  #   "Non_monotonic_valley_E",
-  #   "Non_monotonic_hill_A",
-  #   "Non_monotonic_hill_B",
-  #   "Non_monotonic_hill_C",
-  #   "Non_monotonic_hill_D",
-  #   "Non_monotomic_mixed_A",
-  #   "Non_monotomic_mixed_B"
-)
+probe_paths <- fromJSON(probe_paths_json)
 
 probe_sets <- list()
-
-for (setname in probeset_names) {
-  file_path <- paste0(din, "/probe_set_", setname, ".txt")
-  probe_sets[[setname]] <- readLines(file_path)
+for (analysis_type in names(probe_paths)) {
+  probe_sets[[analysis_type]] <- list()
+  for (setname in probe_paths[[analysis_type]]) {
+    file_path <- paste0(
+      "/projects/p30791/methylation/",
+      analysis_type, "/probe_set_", setname, ".txt"
+    )
+    probe_sets[[analysis_type]][[setname]] <- readLines(file_path)
+  }
 }
 
 ## Download public Databases
@@ -110,78 +70,80 @@ dbs_to_plot <- c(
   "TFBSconsensus"
 )
 
-for (setname in probeset_names) {
-  print(paste0("Testing ", setname, "..."))
-  query <- probe_sets[[setname]]
+for (analysis_type in names(probe_sets)) {
+  for (setname in names(probe_sets[[analysis_type]])) {
+    print(paste0("Testing ", setname, "..."))
+    query <- probe_sets[[setname]]
 
-  # Test enrichment for public databases
-  for (db_id in dbs$Title) {
-    results <- testEnrichment(query, db_list[[db_id]], platform = "EPIC")
+    # Test enrichment for public databases
+    for (db_id in dbs$Title) {
+      results <- testEnrichment(query, db_list[[db_id]], platform = "EPIC")
 
-    # Select statistically significant results
-    db_name <- strsplit(db_id, "\\.")[[1]][3]
-    # Apply q-value threshold
-    results <- results[results$FDR < 0.05, ]
-    # For ease of interpretation, we are only keeping enrichment and discarding depletion
-    results <- results[results$estimate > fold_enrichment_thres, ]
+      # Select statistically significant results
+      db_name <- strsplit(db_id, "\\.")[[1]][3]
+      # Apply q-value threshold
+      results <- results[results$FDR < 0.05, ]
+      # For ease of interpretation, we are only keeping enrichment and discarding depletion
+      results <- results[results$estimate > fold_enrichment_thres, ]
 
-    if (dim(results)[1] == 0) {
-      # only save results if any are significant
+      if (dim(results)[1] == 0) {
+        # only save results if any are significant
+        next
+      }
+
+      # Fix rows where p-value and FDR-adjusted p-values (q-value) suffer from underflow
+      min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
+      results$p.value[results$p.value == 0] <- min_nonzero_value
+
+      min_nonzero_value <- min(results$FDR[results$FDR > 0], na.rm = TRUE)
+      results$FDR[results$FDR == 0] <- min_nonzero_value
+
+      file_path <- paste0(dout, "/testEnrichment_", setname, "_", db_name, ".csv")
+      write.csv(results, file_path, row.names = FALSE)
+      if (db_name %in% dbs_to_plot) {
+        dotplot <- KYCG_plotDot(
+          results,
+          n = 20,
+          title = paste0(
+            "Enriched ", gsub("consensus", "", db_name), " -- ",
+            gsub("_", " ", setname)
+          )
+        )
+        plot_filepath <- paste0(
+          plot_dir, "/dotplot_", setname, "_", db_name, ".png"
+        )
+        num_sig_results <- dim(results)[1]
+        if (num_sig_results >= 20) {
+          height <- 5
+        } else {
+          height <- 3.5 + num_sig_results * 1.5 / 20
+        }
+        ggsave(plot_filepath, plot = dotplot, width = 6, height = height)
+      }
+    }
+
+    # Test enrichment for genes
+    gene_dbs <- KYCG_buildGeneDBs(query, max_distance = 10000, platform = "EPIC")
+
+    if (length(gene_dbs) == 0) {
       next
     }
 
-    # Fix rows where p-value and FDR-adjusted p-values (q-value) suffer from underflow
-    min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
-    results$p.value[results$p.value == 0] <- min_nonzero_value
+    results <- testEnrichment(
+      query,
+      gene_dbs,
+      platform = "EPIC"
+    )
+    results <- results[
+      (results$FDR < 0.05) &
+        (results$estimate > fold_enrichment_thres) &
+        (results$gene_name %in% protein_coding_genes),
+    ]
 
-    min_nonzero_value <- min(results$FDR[results$FDR > 0], na.rm = TRUE)
-    results$FDR[results$FDR == 0] <- min_nonzero_value
-
-    file_path <- paste0(dout, "/testEnrichment_", setname, "_", db_name, ".csv")
-    write.csv(results, file_path, row.names = FALSE)
-    if (db_name %in% dbs_to_plot) {
-      dotplot <- KYCG_plotDot(
-        results,
-        n = 20,
-        title = paste0(
-          "Enriched ", gsub("consensus", "", db_name), " -- ",
-          gsub("_", " ", setname)
-        )
-      )
-      plot_filepath <- paste0(
-        plot_dir, "/dotplot_", setname, "_", db_name, ".png"
-      )
-      num_sig_results <- dim(results)[1]
-      if (num_sig_results >= 20) {
-        height <- 5
-      } else {
-        height <- 3.5 + num_sig_results * 1.5 / 20
-      }
-      ggsave(plot_filepath, plot = dotplot, width = 6, height = height)
+    if (dim(results)[1] > 0) {
+      file_path <- paste0(dout, "/testEnrichment_", setname, "_genes.csv")
+      write.csv(results, file_path, row.names = FALSE)
     }
-  }
-
-  # Test enrichment for genes
-  gene_dbs <- KYCG_buildGeneDBs(query, max_distance = 10000, platform = "EPIC")
-
-  if (length(gene_dbs) == 0) {
-    next
-  }
-
-  results <- testEnrichment(
-    query,
-    gene_dbs,
-    platform = "EPIC"
-  )
-  results <- results[
-    (results$FDR < 0.05) &
-      (results$estimate > fold_enrichment_thres) &
-      (results$gene_name %in% protein_coding_genes),
-  ]
-
-  if (dim(results)[1] > 0) {
-    file_path <- paste0(dout, "/testEnrichment_", setname, "_genes.csv")
-    write.csv(results, file_path, row.names = FALSE)
   }
 }
 
