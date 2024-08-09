@@ -9,7 +9,7 @@ plot_dir <- "/projects/p30791/methylation/plots"
 
 trends <- read.csv(paste0(din, "/dml_hyper_hypo_pairwise_trends.csv"))
 
-df <- trends %>% make_long("All.probes", "CFN.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
+df <- trends %>% make_long("CFN.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
 
 node_colors <- c(
   "hyper" = "#FF00FF", # Magenta
@@ -33,7 +33,7 @@ p <- ggplot(df, aes(
     legend.position = "none",
     axis.title.x = element_blank()
   ) +
-  scale_x_discrete(labels = c("All probes", "CFN vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
+  scale_x_discrete(labels = c("CFN vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
 
 plot_filepath <- paste0(plot_dir, "/dml_sankey.png")
 ggsave(plot_filepath, plot = p, width = 7, height = 4.2)

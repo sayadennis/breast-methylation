@@ -17,7 +17,7 @@ from scipy.stats import false_discovery_control
 ######################################
 
 din_dm = "/projects/p30791/methylation/differential_methylation"
-din_dv = "/projects/p30791/methylation/differential_variability/missMethylDiffVar"
+din_dv = "/projects/p30791/methylation/differential_variability"
 dout_dm = din_dm
 plot_dir = "/projects/p30791/methylation/plots/differential_methylation"
 
@@ -84,8 +84,7 @@ trends = pd.DataFrame(
     index=list(
         set().union(*(df["Probe_ID"] for df in dml_results.values()))
     ),  # all probes
-    columns=["All probes"]
-    + [
+    columns=[
         f"{ref} vs {comp}"
         for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
     ],
@@ -121,9 +120,9 @@ trends.dropna(axis=0, how="all", inplace=True)
 trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
 trends.fillna("n.d.", inplace=True)
 
-trends[
-    ["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]
-].to_csv(f"{din_dm}/dml_hyper_hypo_pairwise_trends.csv")
+trends[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]].to_csv(
+    f"{din_dm}/dml_hyper_hypo_pairwise_trends.csv"
+)
 
 ##############################################
 #### Bar graphs of number of DM/DV probes ####
@@ -144,7 +143,9 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
             ]
         # Next get DV probes
         with open(
-            f"{din_dv}/{trend}DV_missMethyl_{ref}_vs_{comp}.txt", "r", encoding="utf-8"
+            f"{din_dv}/probe_set_{trend}DV_missMethyl_{ref}_vs_{comp}.txt",
+            "r",
+            encoding="utf-8",
         ) as f:
             dv_probes = [x.strip() for x in f.readlines()]
             dv_but_not_dm_probes = list(
@@ -206,9 +207,7 @@ for identifier, pairs in zip(
 #########################################################
 
 # From here, we only focus on comparisons along the TPX
-trends = trends[
-    ["All probes"] + [f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]
-]
+trends = trends[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]]
 
 #### Define set names and their specific patterns ####
 set_patterns = {
@@ -246,7 +245,7 @@ probesets = {}
 for setname, pattern in set_patterns.items():
     subdata = trends.iloc[
         [
-            np.all(trends.loc[i, :].values.ravel()[1:] == np.array(pattern))
+            np.all(trends.loc[i, :].values.ravel() == np.array(pattern))
             for i in trends.index
         ],
         :,
@@ -280,13 +279,13 @@ n_patterns = {
 max_patterns = np.max(list(n_patterns.values()))
 
 coords = {
-    "nd": {"x": -0.25, "y": 0.0, "dx": 0.5, "dy": 0.0},
+    "n.d.": {"x": -0.25, "y": 0.0, "dx": 0.5, "dy": 0.0},
     "hyper": {"x": -0.25, "y": -0.15, "dx": 0.5, "dy": 0.3},
     "hypo": {"x": -0.25, "y": 0.15, "dx": 0.5, "dy": -0.3},
 }
 
 colors = {
-    "nd": "gray",
+    "n.d.": "gray",
     "hyper": "magenta",
     "hypo": "cyan",
 }
@@ -316,7 +315,8 @@ def add_num(i, j, text):
     )
 
 
-def plot_arrows_and_num(i: int, j: int, pattern: list, num: int):
+def plot_arrows_and_num(i: int, j: int, pattern: list):
+    num = (trends == pattern).all(axis=1).sum()
     for k, trend in enumerate(pattern):
         axs[i, j].arrow(
             coords[trend]["x"] + 0.5 + k,
@@ -332,35 +332,35 @@ def plot_arrows_and_num(i: int, j: int, pattern: list, num: int):
 
 
 ## Monotonic increase
-plot_arrows_and_num(0, 0, ["nd", "nd", "nd", "hyper"], 33698)
-plot_arrows_and_num(1, 0, ["hyper", "nd", "nd", "nd"], 739)
-plot_arrows_and_num(2, 0, ["hyper", "nd", "nd", "hyper"], 142)
-plot_arrows_and_num(3, 0, ["nd", "nd", "hyper", "hyper"], 38)
-plot_arrows_and_num(4, 0, ["hyper", "nd", "hyper", "nd"], 6)
+plot_arrows_and_num(0, 0, ["n.d.", "n.d.", "n.d.", "hyper"])
+plot_arrows_and_num(1, 0, ["hyper", "n.d.", "n.d.", "n.d."])
+plot_arrows_and_num(2, 0, ["hyper", "n.d.", "n.d.", "hyper"])
+plot_arrows_and_num(3, 0, ["n.d.", "n.d.", "hyper", "hyper"])
+plot_arrows_and_num(4, 0, ["hyper", "n.d.", "hyper", "n.d."])
 
 ## Monotonic decrease
-plot_arrows_and_num(0, 1, ["nd", "nd", "nd", "hypo"], 53800)
-plot_arrows_and_num(1, 1, ["hypo", "nd", "nd", "nd"], 34882)
-plot_arrows_and_num(2, 1, ["hypo", "nd", "nd", "hypo"], 7672)
-plot_arrows_and_num(3, 1, ["nd", "nd", "hypo", "hypo"], 5)
-plot_arrows_and_num(4, 1, ["hypo", "nd", "hypo", "nd"], 6)
+plot_arrows_and_num(0, 1, ["n.d.", "n.d.", "n.d.", "hypo"])
+plot_arrows_and_num(1, 1, ["hypo", "n.d.", "n.d.", "n.d."])
+plot_arrows_and_num(2, 1, ["hypo", "n.d.", "n.d.", "hypo"])
+plot_arrows_and_num(3, 1, ["n.d.", "n.d.", "hypo", "hypo"])
+plot_arrows_and_num(4, 1, ["hypo", "n.d.", "hypo", "n.d."])
 
 ## Non-monotonic down and up
-plot_arrows_and_num(0, 2, ["hypo", "nd", "nd", "hyper"], 6379)
-plot_arrows_and_num(1, 2, ["nd", "nd", "hypo", "hyper"], 27)
-plot_arrows_and_num(2, 2, ["hypo", "nd", "hypo", "hyper"], 45)
-plot_arrows_and_num(3, 2, ["hypo", "nd", "hyper", "nd"], 25)
-plot_arrows_and_num(4, 2, ["hypo", "nd", "hyper", "hyper"], 3)
+plot_arrows_and_num(0, 2, ["hypo", "n.d.", "n.d.", "hyper"])
+plot_arrows_and_num(1, 2, ["n.d.", "n.d.", "hypo", "hyper"])
+plot_arrows_and_num(2, 2, ["hypo", "n.d.", "hypo", "hyper"])
+plot_arrows_and_num(3, 2, ["hypo", "n.d.", "hyper", "n.d."])
+plot_arrows_and_num(4, 2, ["hypo", "n.d.", "hyper", "hyper"])
 
 ## Non-monotonic up and down
-plot_arrows_and_num(0, 3, ["hyper", "nd", "nd", "hypo"], 56)
-plot_arrows_and_num(1, 3, ["nd", "nd", "hyper", "hypo"], 76)
-plot_arrows_and_num(2, 3, ["hyper", "nd", "hyper", "hypo"], 8)
-plot_arrows_and_num(3, 3, ["hyper", "nd", "hypo", "nd"], 2)
+plot_arrows_and_num(0, 3, ["hyper", "n.d.", "n.d.", "hypo"])
+plot_arrows_and_num(1, 3, ["n.d.", "n.d.", "hyper", "hypo"])
+plot_arrows_and_num(2, 3, ["hyper", "n.d.", "hyper", "hypo"])
+plot_arrows_and_num(3, 3, ["hyper", "n.d.", "hypo", "n.d."])
 
 ## Non-monotonic mixed
-plot_arrows_and_num(0, 4, ["hypo", "nd", "hyper", "hypo"], 29)
-plot_arrows_and_num(1, 4, ["hyper", "nd", "hypo", "hyper"], 4)
+plot_arrows_and_num(0, 4, ["hypo", "n.d.", "hyper", "hypo"])
+plot_arrows_and_num(1, 4, ["hyper", "n.d.", "hypo", "hyper"])
 
 for i in range(max_patterns):
     for j, pattern_name in enumerate(pattern_names):
