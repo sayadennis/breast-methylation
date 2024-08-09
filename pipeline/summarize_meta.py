@@ -4,6 +4,7 @@ import sys
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
+import seaborn as sns
 from tabulate import tabulate
 
 meta_fn = sys.argv[1]  # e.g. "/projects/p30791/methylation/raw_data/meta.csv"
@@ -69,7 +70,7 @@ cts_pcts.to_csv(f"{summary_dir}/crosstab_casecontrol_race.csv")
 #### Tumor characteristics of cases (Plot & Tables) ####
 ########################################################
 
-fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(8, 4))
+fig, axs = plt.subplots(nrows=1, ncols=4, figsize=(6.5, 4))
 
 # custom_colors = list(plt.cm.Set2.colors)  # pylint: disable=no-member
 histology_colors = [plt.get_cmap("viridis")(i / 4) for i in range(4)]
@@ -181,7 +182,7 @@ axs[0].spines["right"].set_visible(False)
 axs[0].spines["left"].set_visible(False)
 axs[0].set_ylim(0, 72)
 axs[0].set_ylabel("Number of patients", fontsize=14)
-axs[0].legend(loc="right")
+axs[0].legend(bbox_to_anchor=(0.0, -0.05), loc="upper left")
 axs[0].set_xticks([])
 axs[0].set_xticklabels([])
 axs[0].set_title("Histology", fontsize=14)
@@ -237,7 +238,7 @@ axs[1].spines["right"].set_visible(False)
 axs[1].spines["left"].set_visible(False)
 axs[1].set_ylim(0, 72)
 axs[1].set_yticklabels([])
-axs[1].legend(loc="right")
+axs[1].legend(bbox_to_anchor=(0.0, -0.05), loc="upper left")
 axs[1].set_xticks([])
 axs[1].set_xticklabels([])
 axs[1].set_title("Grade", fontsize=14)
@@ -270,7 +271,7 @@ axs[2].spines["right"].set_visible(False)
 axs[2].spines["left"].set_visible(False)
 axs[2].set_ylim(0, 72)
 axs[2].set_yticklabels([])
-axs[2].legend(loc="right")
+axs[2].legend(bbox_to_anchor=(0.0, -0.05), loc="upper left")
 axs[2].set_xticks([])
 axs[2].set_xticklabels([])
 axs[2].set_title("ER Status", fontsize=14)
@@ -318,7 +319,7 @@ axs[3].spines["right"].set_visible(False)
 axs[3].spines["left"].set_visible(False)
 axs[3].set_ylim(0, 72)
 axs[3].set_yticklabels([])
-axs[3].legend(loc="right")
+axs[3].legend(bbox_to_anchor=(0.0, -0.05), loc="upper left")
 axs[3].set_xticks([])
 axs[3].set_xticklabels([])
 axs[3].set_title("HER2 Status", fontsize=14)
@@ -336,101 +337,58 @@ for name, df in tables.items():
 #### Plot continuous variables ####
 ###################################
 
-num_meta = meta[["ID", "Case/Control", "Age", "BMI"]].drop_duplicates(
-    ignore_index=False
-)  # numeric values
-
-age_max, age_min = max(meta["Age"]), min(meta["Age"])
-bmi_max, bmi_min = max(meta["BMI"]), min(meta["BMI"])
-
-
-def add_mean_sd(i: int, j: int, data: pd.Series):
-    """
-    Add the text with mean and SD to [i, j] axes.
-    """
-    mean = data.mean()
-    sd = data.std()
-    ax[i, j].text(
-        0.65,
-        0.85,
-        f"Mean {mean:.1f}\n(±{sd:.1f} SD)",
-        transform=ax[i, j].transAxes,
-        fontsize=10,
-        verticalalignment="bottom",
-        multialignment="center",
-        bbox={
-            "boxstyle": "round",
-            "facecolor": "white",
-            "edgecolor": "grey",
-            "alpha": 0.7,
-        },
-    )
-
-
-fig, ax = plt.subplots(3, 2, figsize=(8, 6))
-
-## Age
-ax[0, 0].hist(num_meta["Age"], bins=np.arange(age_min, age_max), color="tab:gray")
-add_mean_sd(0, 0, num_meta["Age"])
-ax[1, 0].hist(
-    num_meta.iloc[num_meta["Case/Control"].values == "case", :]["Age"],
-    bins=np.arange(age_min, age_max),
-    color="tab:pink",
+age_bmi = meta[["ID", "Case/Control", "Age", "BMI"]].drop_duplicates(ignore_index=False)
+age_bmi["Case/Control"] = age_bmi["Case/Control"].map(
+    {"case": "Cancer cases", "normal": "Cancer-free normals"}
 )
-add_mean_sd(1, 0, num_meta.iloc[num_meta["Case/Control"].values == "case", :]["Age"])
-ax[2, 0].hist(
-    num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["Age"],
-    bins=np.arange(age_min, age_max),
-    color="tab:cyan",
+
+label_colors = [plt.get_cmap("winter")(i / 3) for i in range(3)]
+
+fig, ax = plt.subplots(1, 2, figsize=(4, 4))
+
+sns.violinplot(
+    data=age_bmi,
+    y="Age",
+    hue="Case/Control",
+    split=True,
+    inner="quartile",
+    gap=0.1,
+    cut=0,
+    ax=ax[0],
+    legend=False,
 )
-add_mean_sd(2, 0, num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["Age"])
-ax[2, 0].set_xlabel("Age")
+ax[0].set_xlabel("")
+ax[0].spines["right"].set_visible(False)
+ax[0].spines["top"].set_visible(False)
+ax[0].spines["bottom"].set_visible(False)
+ax[0].set_xticklabels([])
+ax[0].yaxis.label.set_size(12)
 
-ax[0, 0].set_title("Age", fontsize=14)
-
-for i, label in enumerate(["All", "Cases", "Normals"]):
-    ax[i, 0].set_xlim(age_min - 5, age_max + 5)
-    ax[i, 0].spines["top"].set_visible(False)
-    ax[i, 0].spines["right"].set_visible(False)
-
-fig.text(
-    0.03, 0.5, "Number of patients", rotation=90, va="center", ha="center", fontsize=14
+sns.violinplot(
+    data=age_bmi,
+    y="BMI",
+    hue="Case/Control",
+    split=True,
+    inner="quartile",
+    gap=0.1,
+    cut=0,
+    ax=ax[1],
 )
-fig.text(0.06, 0.25, "All", rotation=90, va="center", ha="center", fontsize=14)
-fig.text(0.06, 0.5, "Cases", rotation=90, va="center", ha="center", fontsize=14)
-fig.text(0.06, 0.75, "Normals", rotation=90, va="center", ha="center", fontsize=14)
+ax[1].set_xlabel("")
+ax[1].spines["right"].set_visible(False)
+ax[1].spines["top"].set_visible(False)
+ax[1].spines["bottom"].set_visible(False)
+ax[1].set_xticklabels([])
+ax[1].yaxis.label.set_size(12)
 
-## BMI
-ax[0, 1].hist(
-    num_meta["BMI"],
-    bins=np.arange(np.floor(bmi_min), np.ceil(bmi_max)),
-    color="tab:gray",
-)
-add_mean_sd(0, 1, num_meta["BMI"])
-ax[1, 1].hist(
-    num_meta.iloc[num_meta["Case/Control"].values == "case", :]["BMI"],
-    bins=np.arange(np.floor(bmi_min), np.ceil(bmi_max)),
-    color="tab:pink",
-)
-add_mean_sd(1, 1, num_meta.iloc[num_meta["Case/Control"].values == "case", :]["BMI"])
-ax[2, 1].hist(
-    num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["BMI"],
-    bins=np.arange(np.floor(bmi_min), np.ceil(bmi_max)),
-    color="tab:cyan",
-)
-add_mean_sd(2, 1, num_meta.iloc[num_meta["Case/Control"].values == "normal", :]["BMI"])
-ax[2, 1].set_xlabel("BMI")
+handles, labels = ax[1].get_legend_handles_labels()
+ax[1].legend_.remove()  # Remove the existing legend from the second plot
 
-ax[0, 1].set_title("BMI", fontsize=14)
-
-for i, label in enumerate(["All", "Cases", "Normals"]):
-    ax[i, 1].set_xlim(np.floor(bmi_min) - 5, np.ceil(bmi_max) + 5)
-    ax[i, 1].spines["top"].set_visible(False)
-    ax[i, 1].spines["right"].set_visible(False)
-
-fig.suptitle("Distributions of Age and BMI", fontsize=16)
+# Create a new legend outside the axes space
+legend = fig.legend(handles, labels, loc="lower center", bbox_to_anchor=(0.57, 0.00))
+legend.set_title("")  # Remove the title
 
 plt.tight_layout()
-plt.subplots_adjust(left=0.12)
-fig.savefig(f"{summary_dir}/histograms_age_bmi.png")
+plt.subplots_adjust(bottom=0.15)
+fig.savefig(f"{summary_dir}/violin_age_bmi.png")
 plt.close()
