@@ -2,13 +2,14 @@ library(stringr)
 library(sesame)
 
 din <- "/projects/p30791/methylation/differential_methylation"
+dout <- "/projects/p30791/methylation/differential_methylation/KYCG"
 
 dm_results <- list(
   OQ_vs_AN = read.csv(paste0(din, "/DML_results_refOQ_compAN.csv")),
   CUB_vs_OQ = read.csv(paste0(din, "/DML_results_refCUB_compOQ.csv"))
 )
 
-adj_p_thres <- 0.20
+adj_p_thres <- 0.10
 effect_thres <- 0.01
 
 ## Download public Databases
@@ -64,6 +65,8 @@ for (setname in names(dm_results)) {
       # For ease of interpretation, we are only keeping enrichment and discarding depletion
       results <- results[results$estimate > 1.05, ]
 
+      db_name <- strsplit(db_id, ".", fixed = TRUE)[[1]][3]
+
       if (dim(results)[1] > 0) {
         # Fix rows where p-value and FDR-adjusted p-values (q-value) suffer from underflow
         min_nonzero_value <- min(results$p.value[results$p.value > 0], na.rm = TRUE)
@@ -72,9 +75,14 @@ for (setname in names(dm_results)) {
         min_nonzero_value <- min(results$FDR[results$FDR > 0], na.rm = TRUE)
         results$FDR[results$FDR == 0] <- min_nonzero_value
 
-        print(paste0(db_id, ": ", paste(results$dbname, collapse = ", ")))
+        print(paste0(db_name, ": ", paste(results$dbname, collapse = ", ")))
+        file_path <- paste0(
+          dout, "/relaxed_testEnrichment_",
+          trend, "_", setname, "_", db_name, ".csv"
+        )
+        write.csv(results, file_path, row.names = FALSE)
       } else {
-        print(paste("Enrichment results for", db_id, "is empty!"))
+        print(paste("Enrichment results for", db_name, "is empty!"))
       }
     }
 
@@ -95,6 +103,8 @@ for (setname in names(dm_results)) {
 
       if (dim(results)[1] > 0) {
         print(paste("Gene hits:", paste(results$gene_name, collapse = ", ")))
+        file_path <- paste0(dout, "/relaxed_testEnrichment_", trend, "_", setname, "_genes.csv")
+        write.csv(results, file_path, row.names = FALSE)
       } else {
         print("Gene results empty!")
       }
