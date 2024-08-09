@@ -4,7 +4,7 @@
 #SBATCH -t 48:00:00
 #SBATCH -N 1
 #SBATCH -n 1
-#SBATCH --mem=128G
+#SBATCH --mem=96G
 #SBATCH --job-name=diffvar
 #SBATCH --mail-user=sayarenedennis@northwestern.edu
 #SBATCH --mail-type=END,FAIL
@@ -16,6 +16,7 @@ module load R/4.3.0
 module load hdf5/1.8.12-serial
 module load openssl/1.1.1
 module load libxml2/2.9.10-gcc-4.8.5
+module load blas-lapack/3.12.0-gcc-11.2.0
 
 # cd /projects/p30791/methylation/
 cd ~/breast-methylation/pipeline/

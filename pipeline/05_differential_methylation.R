@@ -290,7 +290,7 @@ for (tissue_category in comps) {
       probe_sets$hypo,
       paste0(
         dout,
-        "/probe_set_hyper_",
+        "/probe_set_hypo_",
         contrast_feature,
         "_neg_vs_pos_in_",
         tissue_category,
