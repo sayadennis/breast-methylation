@@ -19,6 +19,7 @@ from scipy.stats import false_discovery_control
 din_dm = "/projects/p30791/methylation/differential_methylation"
 din_dv = "/projects/p30791/methylation/differential_variability"
 dout_dm = din_dm
+dout_dv = din_dv
 plot_dir = "/projects/p30791/methylation/plots/differential_methylation"
 
 if not os.path.exists(plot_dir):
@@ -40,7 +41,7 @@ ref_comp_pairs_tpx = [  # pairs along the tumor proximity axis
     ("AN", "TU"),
 ]
 
-dml_results, dmr_results = {}, {}
+dml_results, dmr_results, dv_results = {}, {}, {}
 for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     # DML results
     dml_results[f"{ref} vs {comp}"] = pd.read_csv(
@@ -49,6 +50,10 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     # DMR results
     dmr_results[f"{ref} vs {comp}"] = pd.read_csv(
         f"{din_dm}/DMR_results_Sample.Region{comp}_ref{ref}.csv"
+    )
+    # DV results
+    dv_results[f"{ref} vs {comp}"] = pd.read_csv(
+        f"{din_dv}/topDV_{ref}_vs_{comp}.csv", index_col=0
     )
     # While we're here, write the lists of all probe sets
     dml_results[f"{ref} vs {comp}"].Probe_ID.to_csv(
@@ -123,6 +128,37 @@ trends.fillna("n.d.", inplace=True)
 trends[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]].to_csv(
     f"{din_dm}/dml_hyper_hypo_pairwise_trends.csv"
 )
+
+
+## Count trends for DV too
+trends_dv = pd.DataFrame(
+    index=list(set().union(*(df.index for df in dv_results.values()))),  # all probes
+    columns=[
+        f"{ref} vs {comp}"
+        for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
+    ],
+)
+
+for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
+    # obtain slope and p-value
+    logvarratio = dv_results[f"{ref} vs {comp}"]["LogVarRatio"]
+    p_vals = dv_results[f"{ref} vs {comp}"]["Adj.P.Value"]
+    # find hypermethylated probes
+    pos_sig = (p_vals < p_thres) & (logvarratio >= 0.2)
+    # find hypomethylated probes
+    neg_sig = (p_vals < p_thres) & (logvarratio <= (-1) * 0.2)
+    # record information
+    trends_dv.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "hyper"
+    trends_dv.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "hypo"
+
+trends_dv = trends_dv[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]]
+
+trends_dv.dropna(axis=0, how="all", inplace=True)
+trends_dv = trends_dv.loc[[x.startswith("cg") for x in trends_dv.index], :]
+trends_dv.fillna("n.d.", inplace=True)
+
+trends_dv.to_csv(f"{dout_dv}/dv_hyper_hypo_pairwise_trends.csv")
+
 
 ##############################################
 #### Bar graphs of number of DM/DV probes ####
