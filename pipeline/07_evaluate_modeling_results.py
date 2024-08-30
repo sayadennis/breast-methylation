@@ -159,6 +159,16 @@ trends_dv.fillna("n.d.", inplace=True)
 
 trends_dv.to_csv(f"{dout_dv}/dv_hyper_hypo_pairwise_trends.csv")
 
+# Save the probe set that is hypo-variable in case-benign tissue
+dv_hypo_case_benign = trends_dv.iloc[
+    (trends_dv == ["hypo", "n.d.", "n.d.", "hyper"]).all(axis=1).values, :
+].index
+
+with open(
+    f"{dout_dv}/probe_set_hypoDV_missMethyl_Non_monotonic_valley_A.txt", "w"
+) as f:
+    for item in dv_hypo_case_benign:
+        f.write(f"{item}\n")
 
 ##############################################
 #### Bar graphs of number of DM/DV probes ####
