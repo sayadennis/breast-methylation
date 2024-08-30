@@ -33,10 +33,10 @@ for hoxa_name, probenames in hoxa_probes.items():
     print(f"{hoxa_name}: ", len(hoxa_probes[hoxa_name]))
 
 tissue_types = ["CFN", "CUB", "OQ", "AN", "TU"]
-hox_nums = [1, 2, 3, 4, 5, 6, 7]
+hox_nums = [2, 3, 4, 5, 6, 7]
 plot_hoxa = [f"HOXA{i}" for i in hox_nums]
 plot_probes = {
-    hox_name: hoxa_probes[hox_name][k] for k, hox_name in enumerate(plot_hoxa)
+    hox_name: hoxa_probes[hox_name][k + 1] for k, hox_name in enumerate(plot_hoxa)
 }
 color_mapping = {
     "CFN": "slategray",
