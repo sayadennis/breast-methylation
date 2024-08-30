@@ -43,6 +43,11 @@ for (analysis_type in names(probe_paths)) {
   }
 }
 
+probe_sets <- lapply(probe_sets, function(sublist) {
+  # Filter out elements that are empty
+  Filter(length, sublist)
+})
+
 ## Download public Databases
 dbs <- KYCG_listDBGroups("EPIC")
 dbs <- dbs[str_starts(dbs$Title, fixed("KYCG.EPIC.")), ]
@@ -73,7 +78,7 @@ dbs_to_plot <- c(
 for (analysis_type in names(probe_sets)) {
   for (setname in names(probe_sets[[analysis_type]])) {
     print(paste0("Testing ", setname, "..."))
-    query <- probe_sets[[setname]]
+    query <- probe_sets[[analysis_type]][[setname]]
 
     # Test enrichment for public databases
     for (db_id in dbs$Title) {

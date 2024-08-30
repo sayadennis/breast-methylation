@@ -20,6 +20,8 @@
         "hypo_ER+_refAN_compTU",
         "hyper_ER+_refAN_compTU",
         "hyper_ER_neg_vs_pos_in_TU",
+        "hypo_ER_neg_vs_pos_in_TU",
+        "hypo_HER2_neg_vs_pos_in_TU",
         "Non_monotonic_valley_A"
     ],
     "differential_variability" : [
