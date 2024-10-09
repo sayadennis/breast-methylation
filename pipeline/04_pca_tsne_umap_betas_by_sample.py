@@ -41,6 +41,10 @@ int_color_mapping = {
     3: "goldenrod",
     4: "orangered",
 }
+posneg_color_mapping = {
+    0: "cyan",
+    1: "magenta",
+}
 
 ## Clean beta
 betas = betas[[col for col in betas.columns if col in meta["IDAT"].unique()]]
@@ -99,7 +103,7 @@ axs[0].set_title("PCA", fontsize=14)
 #### tSNE ####
 ##############
 
-tsne = TSNE()
+tsne = TSNE(random_state=8)
 data_tf = tsne.fit_transform(betas.T)
 data_tf = pd.DataFrame(data_tf, index=betas.columns)
 
@@ -158,8 +162,8 @@ plt.close()
 idat_cases = list(meta.iloc[meta["Sample Region"].values != "CFN", :].IDAT)
 betas_cases = betas.iloc[:, [x in idat_cases for x in betas.columns]]
 
-## Take only the top 5000 most variable probes
-betas_cases = betas_cases.iloc[betas_cases.var(axis=1).argsort().tail(5000), :]
+# ## Take only the top 5000 most variable probes
+# betas_cases = betas_cases.iloc[betas_cases.var(axis=1).argsort().tail(5000), :]
 
 int_labels = np.array(
     [label_int_mapping[idat_to_region[x]] for x in betas_cases.columns]
@@ -181,7 +185,7 @@ data_pca = pca.fit_transform(betas_cases.T)
 data_pca = pd.DataFrame(data_pca, index=betas_cases.columns)
 
 # Run tSNE only on cases
-tsne = TSNE(n_components=2)
+tsne = TSNE(n_components=2, random_state=8)
 data_tsne = tsne.fit_transform(betas_cases.T)
 data_tsne = pd.DataFrame(data_tsne, index=betas_cases.columns)
 
@@ -268,3 +272,94 @@ for feature_name, categories in tumormeta_to_plot.items():
     ).lower()  # "Cancer type" -> "cancer_type"
     fig.savefig(f"{dout}/clustering_by_sample_betas_{feature_name}.png")
     plt.close()
+
+
+#### Experimental plotting ####
+
+tumormeta = {
+    "ER": {0: "-", 1: "+"},
+    "HER2": {0: "Negative", 1: "Positive"},
+}
+
+fig, axs = plt.subplots(nrows=2, ncols=4, figsize=(10, 5))
+
+for i, biomarker in enumerate(["ER", "HER2"]):
+    for j, tissue_category in enumerate(["TU", "AN", "OQ", "CUB"]):
+        # define sample sets
+        idat_focus = meta.iloc[
+            meta["Sample Region"].values == tissue_category, :
+        ].IDAT.values.ravel()
+        idat_positive = meta.iloc[
+            meta[biomarker].values == tumormeta[biomarker][1], :
+        ].IDAT.values.ravel()
+        idat_negative = meta.iloc[
+            meta[biomarker].values == tumormeta[biomarker][0], :
+        ].IDAT.values.ravel()
+        # plot scatter
+        axs[i, j].scatter(
+            data_tsne.iloc[[idat not in idat_focus for idat in data_tsne.index], :][0],
+            data_tsne.iloc[[idat not in idat_focus for idat in data_tsne.index], :][1],
+            c="k",
+            alpha=0.1,
+            label=None,
+            s=10,
+        )
+        axs[i, j].scatter(
+            data_tsne.iloc[
+                [
+                    (idat in idat_focus) & (idat in idat_negative)
+                    for idat in data_tsne.index
+                ],
+                :,
+            ][0],
+            data_tsne.iloc[
+                [
+                    (idat in idat_focus) & (idat in idat_negative)
+                    for idat in data_tsne.index
+                ],
+                :,
+            ][1],
+            c="tab:cyan",
+            label="Negative",
+            s=10,
+        )
+        axs[i, j].scatter(
+            data_tsne.iloc[
+                [
+                    (idat in idat_focus) & (idat in idat_positive)
+                    for idat in data_tsne.index
+                ],
+                :,
+            ][0],
+            data_tsne.iloc[
+                [
+                    (idat in idat_focus) & (idat in idat_positive)
+                    for idat in data_tsne.index
+                ],
+                :,
+            ][1],
+            c="tab:pink",
+            label="Positive",
+            s=10,
+        )
+        # label axes etc.
+        axs[i, j].set_xticklabels([])
+        axs[i, j].set_yticklabels([])
+        axs[i, j].spines["top"].set_visible(False)
+        axs[i, j].spines["right"].set_visible(False)
+        if j == 0:
+            axs[i, j].legend()
+            axs[i, j].set_ylabel(biomarker, fontsize=14)
+        if i == 0:
+            axs[i, j].set_title(
+                tissue_category,
+                fontsize=14,
+                c=int_color_mapping[label_int_mapping[tissue_category]],
+                weight="bold",
+            )
+
+fig.suptitle("t-SNE of methylation profiles", fontsize=16)
+
+plt.tight_layout()
+fig.savefig(f"{dout}/clustering_by_sample_betas_colored_by_positivity.png")
+plt.close()
