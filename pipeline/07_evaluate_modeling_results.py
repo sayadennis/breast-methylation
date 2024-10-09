@@ -215,6 +215,13 @@ for identifier, pairs in zip(
     fig, axs = plt.subplots(nrows=2, ncols=2, figsize=(5.5, 7))
     # Plot bar graphs
     for i, analysis in enumerate(["DM", "DV"]):
+        bar_max = 1.05 * max(
+            max(
+                len(probesets[analysis][f"{trend.lower()}_ref{ref}_comp{comp}"])
+                for ref, comp in pairs
+            )
+            for trend in ["hyper", "hypo"]
+        )
         for j, trend in enumerate(["Hyper", "Hypo"]):
             axs[i, j].bar(
                 np.arange(4),
@@ -233,6 +240,7 @@ for identifier, pairs in zip(
             axs[i, j].set_xticklabels(
                 [f"{ref} vs {comp}" for ref, comp in pairs], ha="right", rotation=30
             )
+            axs[i, j].set_ylim(0, bar_max)
             axs[i, j].yaxis.set_major_formatter(FuncFormatter(format_ticks))
             if j == 0:
                 axs[i, j].set_ylabel("Number of Probes")
