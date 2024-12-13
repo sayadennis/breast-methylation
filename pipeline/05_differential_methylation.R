@@ -65,7 +65,7 @@ get_probe_sets <- function(test_result, p_thres, effect_thres, pval_colname, slo
 #### Differential methylation analysis by tissue category ####
 ##############################################################
 
-refs <- c("CFN", "CUB", "OQ", "AN", "CFN", "CFN", "CUB", "OQ", "AN")
+refs <- c("UN", "CUB", "OQ", "AN", "UN", "UN", "CUB", "OQ", "AN")
 comps <- c("TU", "TU", "TU", "TU", "AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
@@ -151,8 +151,8 @@ for (i in seq_along(refs)) {
 #### Differential methylation along TPX separated by ER status ####
 ###################################################################
 
-refs <- c("CUB", "OQ", "AN")
-comps <- c("OQ", "AN", "TU")
+refs <- c("UN", "CUB", "OQ", "AN")
+comps <- c("CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
   ref <- refs[i]
@@ -162,7 +162,11 @@ for (i in seq_along(refs)) {
   meta_sub <- meta[meta$Sample.Region %in% c(ref, comp), ]
   betas_sub <- betas[, paste0("X", meta_sub$IDAT)]
 
-  for (er_status in unique(meta_sub$ER)) {
+  for (er_status in c("+", "-")) {
+    # If reference if UN, set ER status accordingly to include all patients
+    if (ref == "UN") {
+      meta_sub[meta_sub$Sample.Region == "UN", "ER"] = er_status
+    }
     # Subset metadata and betas by ER status
     meta_sub_er <- meta_sub[meta_sub$ER == er_status, ]
     meta_sub_er$Sample.Region <- relevel(factor(meta_sub_er$Sample.Region), ref)
@@ -213,89 +217,89 @@ for (i in seq_along(refs)) {
 #### Differential methylation between same tissue types separated by tumor biomarker ####
 #########################################################################################
 
-comps <- c("CUB", "OQ", "AN", "TU")
-
-meta_cases <- meta[meta$Case.Control == "case", ]
-betas_cases <- betas[, paste0("X", meta_cases$IDAT)]
-
-# Create useful metadata columns
-meta_cases$HER2 <- relevel(
-  factor(
-    ifelse(
-      meta_cases$HER2 %in% c(2, 3),
-      "Positive", "Negative"
-    )
-  ), "Negative"
-)
-meta_cases$ER <- relevel(
-  factor(
-    ifelse(
-      meta_cases$ER == "+",
-      "Positive", "Negative"
-    )
-  ), "Negative"
-)
-
-for (tissue_category in comps) {
-  print(paste0("Running analysis for ", tissue_category, "..."))
-  # Subset the betas and metadata
-  meta_sub <- meta_cases[meta_cases$Sample.Region == tissue_category, ]
-  betas_sub <- betas_cases[, paste0("X", meta_sub$IDAT)]
-
-  for (contrast_feature in c("ER", "HER2")) {
-    print(paste0("Running ", contrast_feature, "..."))
-    # Exclude probes that are missing levels on sample region etc.
-    cpg_ok <- checkLevels(betas_sub, meta_sub[[contrast_feature]])
-    print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
-    betas_sub_cpgfilter <- betas_sub[cpg_ok, ]
-    # Create formula string with contrast feature to plug into DML
-    formula_string <- paste("~", contrast_feature, "+ Age + BMI")
-    formula_expression <- as.formula(formula_string)
-    # Run DML
-    smry <- DML(betas_sub_cpgfilter, formula_expression, meta = meta_sub)
-    test_result <- summaryExtractTest(smry)
-    # Save results
-    write.csv(
-      test_result,
-      paste0(
-        dout, "/DML_results_of_", tissue_category, "_by_", contrast_feature, ".csv"
-      ),
-      quote = FALSE, row.names = FALSE
-    )
-    # Save significant probes
-    pval_colname <- paste0("Pval_", contrast_feature, "Positive")
-    slope_colname <- paste0("Est_", contrast_feature, "Positive")
-
-    probe_sets <- get_probe_sets(
-      test_result = test_result,
-      p_thres = p_thres,
-      effect_thres = effect_thres,
-      pval_colname = pval_colname,
-      slope_colname = slope_colname
-    )
-
-    # Write probe sets
-    writeLines(
-      probe_sets$hyper,
-      paste0(
-        dout,
-        "/probe_set_hyper_",
-        contrast_feature,
-        "_neg_vs_pos_in_",
-        tissue_category,
-        ".txt"
-      )
-    )
-    writeLines(
-      probe_sets$hypo,
-      paste0(
-        dout,
-        "/probe_set_hypo_",
-        contrast_feature,
-        "_neg_vs_pos_in_",
-        tissue_category,
-        ".txt"
-      )
-    )
-  }
-}
+# comps <- c("CUB", "OQ", "AN", "TU")
+# 
+# meta_cases <- meta[meta$Case.Control == "case", ]
+# betas_cases <- betas[, paste0("X", meta_cases$IDAT)]
+# 
+# # Create useful metadata columns
+# meta_cases$HER2 <- relevel(
+#   factor(
+#     ifelse(
+#       meta_cases$HER2 %in% c(2, 3),
+#       "Positive", "Negative"
+#     )
+#   ), "Negative"
+# )
+# meta_cases$ER <- relevel(
+#   factor(
+#     ifelse(
+#       meta_cases$ER == "+",
+#       "Positive", "Negative"
+#     )
+#   ), "Negative"
+# )
+# 
+# for (tissue_category in comps) {
+#   print(paste0("Running analysis for ", tissue_category, "..."))
+#   # Subset the betas and metadata
+#   meta_sub <- meta_cases[meta_cases$Sample.Region == tissue_category, ]
+#   betas_sub <- betas_cases[, paste0("X", meta_sub$IDAT)]
+# 
+#   for (contrast_feature in c("ER", "HER2")) {
+#     print(paste0("Running ", contrast_feature, "..."))
+#     # Exclude probes that are missing levels on sample region etc.
+#     cpg_ok <- checkLevels(betas_sub, meta_sub[[contrast_feature]])
+#     print(paste0(sum(cpg_ok), " probes have sufficient levels for sample region."))
+#     betas_sub_cpgfilter <- betas_sub[cpg_ok, ]
+#     # Create formula string with contrast feature to plug into DML
+#     formula_string <- paste("~", contrast_feature, "+ Age + BMI")
+#     formula_expression <- as.formula(formula_string)
+#     # Run DML
+#     smry <- DML(betas_sub_cpgfilter, formula_expression, meta = meta_sub)
+#     test_result <- summaryExtractTest(smry)
+#     # Save results
+#     write.csv(
+#       test_result,
+#       paste0(
+#         dout, "/DML_results_of_", tissue_category, "_by_", contrast_feature, ".csv"
+#       ),
+#       quote = FALSE, row.names = FALSE
+#     )
+#     # Save significant probes
+#     pval_colname <- paste0("Pval_", contrast_feature, "Positive")
+#     slope_colname <- paste0("Est_", contrast_feature, "Positive")
+# 
+#     probe_sets <- get_probe_sets(
+#       test_result = test_result,
+#       p_thres = p_thres,
+#       effect_thres = effect_thres,
+#       pval_colname = pval_colname,
+#       slope_colname = slope_colname
+#     )
+# 
+#     # Write probe sets
+#     writeLines(
+#       probe_sets$hyper,
+#       paste0(
+#         dout,
+#         "/probe_set_hyper_",
+#         contrast_feature,
+#         "_neg_vs_pos_in_",
+#         tissue_category,
+#         ".txt"
+#       )
+#     )
+#     writeLines(
+#       probe_sets$hypo,
+#       paste0(
+#         dout,
+#         "/probe_set_hypo_",
+#         contrast_feature,
+#         "_neg_vs_pos_in_",
+#         tissue_category,
+#         ".txt"
+#       )
+#     )
+#   }
+# }

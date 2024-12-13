@@ -18,7 +18,7 @@ meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 #### Loop through comparisons and run iEVORA ####
 #################################################
 
-refs <- c("CFN", "CFN", "CUB", "OQ", "AN")
+refs <- c("UN", "UN", "CUB", "OQ", "AN")
 comps <- c("AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
@@ -58,7 +58,7 @@ for (i in seq_along(refs)) {
 }
 
 ########################################################
-#### Recreate CFN vs. AN results with just HM450 ####
+#### Recreate UN vs. AN results with just HM450 ####
 ########################################################
 
 hm450 <- read.csv(
@@ -92,7 +92,7 @@ print(paste(
   "(", round(inconsistent_pct, 2), "% ) have different probe sequences."
 ))
 
-ref <- "CFN"
+ref <- "UN"
 comp <- "AN"
 
 ## Create subset data with categories of interest

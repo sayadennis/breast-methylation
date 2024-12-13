@@ -18,7 +18,7 @@ meta <- read.csv("/projects/p30791/methylation/raw_data/meta.csv")
 betas <- as.matrix(betas)
 meta <- meta[paste0("X", meta$IDAT) %in% colnames(betas), ]
 
-refs <- c("CFN", "CUB", "OQ", "CFN", "CFN", "CUB", "OQ", "AN")
+refs <- c("UN", "CUB", "OQ", "UN", "UN", "CUB", "OQ", "AN")
 comps <- c("TU", "TU", "TU", "AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {

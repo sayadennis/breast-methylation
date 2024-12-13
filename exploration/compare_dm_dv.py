@@ -7,7 +7,7 @@ dv_din = "/projects/p30791/methylation/differential_variability/missMethylDiffVa
 dout = "/projects/p30791/methylation/plots"
 
 comparisons = [
-    ("CFN", "CUB"),
+    ("UN", "CUB"),
     # ("CUB", "OQ"),
     ("OQ", "AN"),
     ("AN", "TU"),

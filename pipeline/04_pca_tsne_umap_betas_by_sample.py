@@ -32,8 +32,8 @@ meta.loc[:, "HER2"] = meta["HER2"].map(
 
 ## Create mappings between IDAT IDs, tissue category, and integers
 idat_to_region = dict(zip(meta["IDAT"], meta["Sample Region"]))
-label_int_mapping = {"CFN": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
-int_label_mapping = {0: "CFN", 1: "CUB", 2: "OQ", 3: "AN", 4: "TU"}
+label_int_mapping = {"UN": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
+int_label_mapping = {0: "UN", 1: "CUB", 2: "OQ", 3: "AN", 4: "TU"}
 int_color_mapping = {
     0: "slategray",
     1: "cornflowerblue",
@@ -159,7 +159,7 @@ plt.close()
 ################################
 
 # Only select cancer patients
-idat_cases = list(meta.iloc[meta["Sample Region"].values != "CFN", :].IDAT)
+idat_cases = list(meta.iloc[meta["Sample Region"].values != "UN", :].IDAT)
 betas_cases = betas.iloc[:, [x in idat_cases for x in betas.columns]]
 
 # ## Take only the top 5000 most variable probes
@@ -236,7 +236,7 @@ for feature_name, categories in tumormeta_to_plot.items():
             )
             # next plot samples that do belong to focus category
             for region, intlabel in label_int_mapping.items():
-                if region != "CFN":
+                if region != "UN":
                     subset_data = foreground_samples[method].loc[
                         [
                             idat_to_region[idat_id] == region
@@ -272,6 +272,64 @@ for feature_name, categories in tumormeta_to_plot.items():
     ).lower()  # "Cancer type" -> "cancer_type"
     fig.savefig(f"{dout}/clustering_by_sample_betas_{feature_name}.png")
     plt.close()
+
+
+#### Plot just tSNE for ER ####
+
+feature_name = "ER"
+categories = ["+", "-"]
+
+fig, axs = plt.subplots(
+    nrows=len(categories), ncols=1, figsize=(3, 2.5 * len(categories))
+)
+for i, category in enumerate(categories):
+    idat_focus = meta.iloc[meta[feature_name].values == category, :].IDAT.values.ravel()
+    background_samples = data_tsne.loc[
+        [idat_id not in idat_focus for idat_id in data_tsne.index], :
+    ]
+    foreground_samples = data_tsne.loc[
+        [idat_id in idat_focus for idat_id in data_tsne.index], :
+    ]
+    # first plot samples that do not belong to focus caetgory
+    axs[i].scatter(
+        background_samples[0],
+        background_samples[1],
+        c="k",
+        alpha=0.1,
+        s=10,
+        label=None,
+    )
+    # next plot samples that do belong to focus category
+    for region, intlabel in label_int_mapping.items():
+        if region != "UN":
+            subset_data = foreground_samples.loc[
+                [
+                    idat_to_region[idat_id] == region
+                    for idat_id in foreground_samples.index
+                ],
+                :,
+            ]
+            axs[i].scatter(
+                subset_data[0],
+                subset_data[1],
+                s=10,
+                label=region,
+                color=int_color_mapping[intlabel],
+            )
+    # label axes etc.
+    axs[i].set_xticklabels([])
+    axs[i].set_yticklabels([])
+    axs[i].spines["top"].set_visible(False)
+    axs[i].spines["right"].set_visible(False)
+    axs[i].legend()
+    axs[i].set_ylabel(f"{feature_name}={category}", fontsize=14)
+    if i == 0:
+        axs[i].set_title("tSNE", fontsize=14)
+
+plt.tight_layout()
+feature_name = feature_name.replace(" ", "_").lower()  # "Cancer type" -> "cancer_type"
+fig.savefig(f"{dout}/tSNE_by_sample_betas_{feature_name}.png")
+plt.close()
 
 
 #### Experimental plotting ####

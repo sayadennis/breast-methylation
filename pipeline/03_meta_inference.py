@@ -10,11 +10,11 @@ dout = "/projects/p30791/methylation/plots"
 
 data = pd.read_csv(fin)
 
-tissue_types = ["All", "CFN", "CUB", "OQ", "AN", "TU"]
+tissue_types = ["All", "UN", "CUB", "OQ", "AN", "TU"]
 
 color_mapping = {
     "All": "darkslategray",
-    "CFN": "slategray",
+    "UN": "slategray",
     "CUB": "cornflowerblue",
     "OQ": "forestgreen",
     "AN": "goldenrod",
@@ -31,7 +31,7 @@ sns.violinplot(
     data=data,
     x="Sample.Region",
     y="EstLeukFrac",
-    order=["CFN", "CUB", "OQ", "AN", "TU"],
+    order=["UN", "CUB", "OQ", "AN", "TU"],
     inner="quartile",
     hue="Sample.Region",
     palette=color_mapping,

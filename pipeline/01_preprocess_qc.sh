@@ -1,9 +1,10 @@
 #!/bin/bash
 #SBATCH -A p31931
-#SBATCH -p normal
-#SBATCH -t 48:00:00
+#SBATCH -p gengpu
+#SBATCH --gres=gpu:a100:1
+#SBATCH -t 12:00:00
 #SBATCH -N 1
-#SBATCH -n 8
+#SBATCH -n 1
 #SBATCH --mem=140G
 #SBATCH --job-name=preproc
 #SBATCH --mail-user=sayarenedennis@northwestern.edu

@@ -9,11 +9,11 @@ dout <- din
 ## Read the query probe sets
 probeset_names <- c(
   # Comparisons along TPX
-  "hyper_refCFN_compCUB",
+  "hyper_refUN_compCUB",
   "hyper_refCUB_compOQ",
   "hyper_refOQ_compAN",
   "hyper_refAN_compTU",
-  "hypo_refCFN_compCUB",
+  "hypo_refUN_compCUB",
   "hypo_refCUB_compOQ",
   "hypo_refOQ_compAN",
   "hypo_refAN_compTU",
@@ -56,25 +56,25 @@ cols <- c(
 cts <- data.frame(matrix(
   c(
     # hypo in CUB and TU
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "ZNF217", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "AHR", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "TLE3", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GREB1", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GRHL2", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "ESR1", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "PR", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "FOSL2", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "AR", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GATA3", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "NR3C1", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "HES2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "ZNF217", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "AHR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "TLE3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "GREB1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "GRHL2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "ESR1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "PR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "FOSL2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "AR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "GATA3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "NR3C1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "HES2", 0, 0, 0, 0, 0., 0., 0.,
     # hyper in AN and TU
     "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "CDCA2", 0, 0, 0, 0, 0., 0., 0.,
     "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "ATF7IP", 0, 0, 0, 0, 0., 0., 0.,
     "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "ZFP57", 0, 0, 0, 0, 0., 0., 0.,
     # mixed
     "hyper", "hypo", "refOQ_compAN", "refOQ_compAN", "CNOT3", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hyper", "refCFN_compCUB", "refAN_compTU", "TEAD1", 0, 0, 0, 0, 0., 0., 0.
+    "hypo", "hyper", "refUN_compCUB", "refAN_compTU", "TEAD1", 0, 0, 0, 0, 0., 0., 0.
   ),
   ncol = length(cols),
   byrow = TRUE
@@ -123,25 +123,25 @@ write.csv(cts, file = paste0(dout, "/TFBS_hits_probe_overlaps.csv"), row.names =
 cts <- data.frame(matrix(
   c(
     # hypo in CUB and TU
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "ZNF217", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "AHR", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "TLE3", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GREB1", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GRHL2", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "ESR1", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "PR", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "FOSL2", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "AR", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "GATA3", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "NR3C1", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hypo", "refCFN_compCUB", "refAN_compTU", "HES2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "ZNF217", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "AHR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "TLE3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "GREB1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "GRHL2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "ESR1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "PR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "FOSL2", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "AR", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "GATA3", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "NR3C1", 0, 0, 0, 0, 0., 0., 0.,
+    "hypo", "hypo", "refUN_compCUB", "refAN_compTU", "HES2", 0, 0, 0, 0, 0., 0., 0.,
     # hyper in AN and TU
     "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "CDCA2", 0, 0, 0, 0, 0., 0., 0.,
     "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "ATF7IP", 0, 0, 0, 0, 0., 0., 0.,
     "hyper", "hyper", "refOQ_compAN", "refAN_compTU", "ZFP57", 0, 0, 0, 0, 0., 0., 0.,
     # mixed
     "hyper", "hypo", "refOQ_compAN", "refOQ_compAN", "CNOT3", 0, 0, 0, 0, 0., 0., 0.,
-    "hypo", "hyper", "refCFN_compCUB", "refAN_compTU", "TEAD1", 0, 0, 0, 0, 0., 0., 0.
+    "hypo", "hyper", "refUN_compCUB", "refAN_compTU", "TEAD1", 0, 0, 0, 0, 0., 0., 0.
   ),
   ncol = length(cols),
   byrow = TRUE

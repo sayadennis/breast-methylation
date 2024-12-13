@@ -22,8 +22,3 @@ repos:
             "--disable=missing-module-docstring",
         ]
 
-  - repo: https://github.com/lorenzwalthert/precommit
-    rev: v0.3.2
-    hooks:
-      - id: style-files
-      - id: lintr
