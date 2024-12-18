@@ -72,7 +72,7 @@ for qc_metric, info_dict in qc_metrics.items():
         y=qc_metric,
         hue="Status",
         split=True,
-        order=["UN", "CUB", "OQ", "AN", "TU"],
+        order=["HDB", "CUB", "OQ", "AN", "TU"],
         inner="quartile",
         palette="Set2",
         ax=ax,

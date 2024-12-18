@@ -29,13 +29,13 @@ if not os.path.exists(f"{dout_dm}/all_probes_DM"):
     os.makedirs(f"{dout_dm}/all_probes_DM")
 
 ref_comp_pairs_normals = [  # pairs to compare the normals
-    ("UN", "TU"),
+    ("HDB", "TU"),
     ("CUB", "TU"),
     ("OQ", "TU"),
     ("AN", "TU"),
 ]
 ref_comp_pairs_tpx = [  # pairs along the tumor proximity axis
-    ("UN", "CUB"),
+    ("HDB", "CUB"),
     ("CUB", "OQ"),
     ("OQ", "AN"),
     ("AN", "TU"),
@@ -62,7 +62,7 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
         index=False,
     )
 
-tissue_types = ["UN", "CUB", "OQ", "AN", "TU"]
+tissue_types = ["HDB", "CUB", "OQ", "AN", "TU"]
 
 with open(
     f"{str(Path.home())}/breast-methylation/pipeline/config.json", "r", encoding="utf-8"
@@ -433,7 +433,7 @@ for i in range(max_patterns):
         )
         if i == (max_patterns - 1):
             axs[i, j].set_xticklabels(
-                ["UN", "CUB", "OQ", "AN", "TU"], fontsize=12, ha="center", rotation=30
+                ["HDB", "CUB", "OQ", "AN", "TU"], fontsize=12, ha="center", rotation=30
             )
         else:
             axs[i, j].set_xticklabels([])

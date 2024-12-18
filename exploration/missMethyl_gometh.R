@@ -11,8 +11,8 @@ probeset_names <- c(
   "hyper_ER+_refAN_compTU",
   "hypo_ER-_refAN_compTU",
   "hypo_ER+_refAN_compTU",
-  "hyper_refUN_compCUB",
-  "hypo_refUN_compCUB",
+  "hyper_refHDB_compCUB",
+  "hypo_refHDB_compCUB",
   "hyper_refOQ_compAN",
   "hypo_refOQ_compAN",
   "hyper_refAN_compTU",
@@ -84,7 +84,7 @@ tfs <- c(
 )
 
 # Get the probe set names
-left_name <- "hypo_refUN_compCUB"
+left_name <- "hypo_refHDB_compCUB"
 right_name <- "hypo_refAN_compTU"
 
 # Get all probes in comparisons
@@ -108,9 +108,9 @@ for (tf in tfs) {
 
 # Get left- and right-only probes
 tf_probes <- list(
-  "TFBS_UN_vs_CUB_only" = setdiff(left_probes_tf_all, right_probes_tf_all),
+  "TFBS_HDB_vs_CUB_only" = setdiff(left_probes_tf_all, right_probes_tf_all),
   "TFBS_AN_vs_TU_only" = setdiff(right_probes_tf_all, left_probes_tf_all),
-  "TFBS_UNvCUB_ANvTU_overlap" = intersect(left_probes_tf_all, right_probes_tf_all)
+  "TFBS_HDBvCUB_ANvTU_overlap" = intersect(left_probes_tf_all, right_probes_tf_all)
 )
 
 for (setname in names(tf_probes)) {

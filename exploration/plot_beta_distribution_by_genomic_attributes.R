@@ -95,14 +95,14 @@ mean_betas <- merged_df_sesame %>%
 
 mean_betas$Sample.Region <- factor(
   mean_betas$Sample.Region,
-  levels = c("UN", "CUB", "OQ", "AN", "TU")
+  levels = c("HDB", "CUB", "OQ", "AN", "TU")
 )
 mean_betas$CGI_location <- factor(
   mean_betas$CGI_location,
   levels = c("N_Shelf", "N_Shore", "Island", "S_Shore", "S_Shelf")
 )
 colors <- c(
-  "UN" = "gray66",
+  "HDB" = "gray66",
   "CUB" = "steelblue2",
   "OQ" = "chartreuse3",
   "AN" = "orange1",
@@ -152,14 +152,14 @@ mean_betas <- merged_df_sesame %>%
 
 mean_betas$Sample.Region <- factor(
   mean_betas$Sample.Region,
-  levels = c("UN", "CUB", "OQ", "AN", "TU")
+  levels = c("HDB", "CUB", "OQ", "AN", "TU")
 )
 mean_betas$chromHMM <- factor(
   mean_betas$chromHMM,
   levels = ordered_names
 )
 colors <- c(
-  "UN" = "gray66",
+  "HDB" = "gray66",
   "CUB" = "steelblue2",
   "OQ" = "chartreuse3",
   "AN" = "orange1",

@@ -8,8 +8,8 @@ dout <- probe_dir
 
 ## Read the query probe sets
 probe_sets <- list(
-  hyper_refUN_compCUB = readLines(paste0(probe_dir, "/probe_set_hyper_refUN_compCUB.txt")),
-  hypo_refUN_compCUB = readLines(paste0(probe_dir, "/probe_set_hypo_refUN_compCUB.txt")),
+  hyper_refHDB_compCUB = readLines(paste0(probe_dir, "/probe_set_hyper_refHDB_compCUB.txt")),
+  hypo_refHDB_compCUB = readLines(paste0(probe_dir, "/probe_set_hypo_refHDB_compCUB.txt")),
   hyper_refAN_compTU = readLines(paste0(probe_dir, "/probe_set_hyper_refAN_compTU.txt")),
   hypo_refAN_compTU = readLines(paste0(probe_dir, "/probe_set_hypo_refAN_compTU.txt"))
 )
@@ -28,9 +28,9 @@ sorted_names <- names(db)[order(numbers)]
 df <- data.frame(matrix(NA, nrow = length(sorted_names), ncol = 4))
 
 rownames(df) <- sorted_names
-colnames(df) <- c("UNvsCUB.hyper", "UNvsCUB.hypo", "ANvsTU.hyper", "ANvsTU.hypo")
+colnames(df) <- c("HDBvsCUB.hyper", "HDBvsCUB.hypo", "ANvsTU.hyper", "ANvsTU.hypo")
 
-ref_list <- c("UN", "AN")
+ref_list <- c("HDB", "AN")
 comp_list <- c("CUB", "TU")
 
 for (chromname in sorted_names) {

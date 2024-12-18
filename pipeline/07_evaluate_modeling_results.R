@@ -13,8 +13,8 @@ plot_dir <- "/projects/p30791/methylation/plots"
 
 trends <- read.csv(paste0(din, "/dml_hyper_hypo_pairwise_trends.csv"))
 
-# df <- trends %>% make_long("UN.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
-df <- trends %>% make_long("AN.vs.TU", "OQ.vs.AN", "CUB.vs.OQ", "UN.vs.CUB")
+# df <- trends %>% make_long("HDB.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
+df <- trends %>% make_long("AN.vs.TU", "OQ.vs.AN", "CUB.vs.OQ", "HDB.vs.CUB")
 
 # Order factors to control the vertical order of nodes
 df <- df %>%
@@ -44,8 +44,8 @@ p <- ggplot(df, aes(
     legend.position = "none",
     axis.title.x = element_blank()
   ) +
-  # scale_x_discrete(labels = c("UN vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
-  scale_x_discrete(labels = c("TU vs AN", "AN vs OQ", "OQ vs CUB", "CUB vs UN"))
+  # scale_x_discrete(labels = c("HDB vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
+  scale_x_discrete(labels = c("TU vs AN", "AN vs OQ", "OQ vs CUB", "CUB vs HDB"))
 
 plot_filepath <- paste0(plot_dir, "/dml_sankey.png")
 ggsave(plot_filepath, plot = p, width = 9, height = 3.6)
@@ -59,7 +59,7 @@ plot_dir <- "/projects/p30791/methylation/plots"
 
 trends <- read.csv(paste0(din, "/dv_hyper_hypo_pairwise_trends.csv"))
 
-df <- trends %>% make_long("UN.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
+df <- trends %>% make_long("HDB.vs.CUB", "CUB.vs.OQ", "OQ.vs.AN", "AN.vs.TU")
 
 node_colors <- c(
   "hyper" = "#FF00FF", # Magenta
@@ -83,7 +83,7 @@ p <- ggplot(df, aes(
     legend.position = "none",
     axis.title.x = element_blank()
   ) +
-  scale_x_discrete(labels = c("UN vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
+  scale_x_discrete(labels = c("HDB vs CUB", "CUB vs OQ", "OQ vs AN", "AN vs TU"))
 
 plot_filepath <- paste0(plot_dir, "/dv_sankey.png")
 ggsave(plot_filepath, plot = p, width = 7, height = 4.2)

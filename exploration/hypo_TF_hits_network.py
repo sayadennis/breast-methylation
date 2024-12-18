@@ -7,7 +7,7 @@ hits = pd.read_csv(f"{din}/TFBS_hits_gene_overlaps.csv")
 hits = hits.iloc[:12]  # only focus on hypo overlap for now
 
 trend = "hypo"
-left_comparison = "refUN_compCUB"
+left_comparison = "refHDB_compCUB"
 right_comparison = "refAN_compTU"
 
 genes = {

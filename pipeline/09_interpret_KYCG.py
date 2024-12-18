@@ -16,12 +16,12 @@ probe_set_names = [
     "hyper_ER+_refAN_compTU",
     "hypo_ER-_refAN_compTU",
     "hypo_ER+_refAN_compTU",
-    "hyper_ER-_refUN_compCUB",
-    "hyper_ER+_refUN_compCUB",
-    "hypo_ER-_refUN_compCUB",
-    "hypo_ER+_refUN_compCUB",
-    "hyper_refUN_compCUB",
-    "hypo_refUN_compCUB",
+    "hyper_ER-_refHDB_compCUB",
+    "hyper_ER+_refHDB_compCUB",
+    "hypo_ER-_refHDB_compCUB",
+    "hypo_ER+_refHDB_compCUB",
+    "hyper_refHDB_compCUB",
+    "hypo_refHDB_compCUB",
     "hyper_refOQ_compAN",
     "hypo_refOQ_compAN",
     "hyper_refAN_compTU",
@@ -37,7 +37,7 @@ for setname in probe_set_names:
 
 ###########################################################
 #### Plot horizontal bar graphs showing gene/probe overlaps
-#### driving TFBS hits in UN/CUB and AN/TU comparison ####
+#### driving TFBS hits in HDB/CUB and AN/TU comparison ####
 ###########################################################
 
 probe_or_gene = "gene"

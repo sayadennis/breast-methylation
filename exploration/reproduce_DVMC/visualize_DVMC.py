@@ -9,12 +9,12 @@ plotdir = "/projects/p30791/methylation/plots/differential_methylation/dvmc"
 
 dvmc_types = [
     "HM450_without_pOOBAH",
-    "UN_vs_AN_without_pOOBAH",
-    "UN_vs_CUB",
+    "HDB_vs_AN_without_pOOBAH",
+    "HDB_vs_CUB",
     "CUB_vs_OQ",
     "OQ_vs_AN",
     "AN_vs_TU",
-    "UN_vs_AN",
+    "HDB_vs_AN",
     "HM450",
 ]
 

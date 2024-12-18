@@ -32,14 +32,14 @@ for hoxa_name, probenames in hoxa_probes.items():
     hoxa_probes[hoxa_name] = list(set(probenames).intersection(set(dm_probes)))
     print(f"{hoxa_name}: ", len(hoxa_probes[hoxa_name]))
 
-tissue_types = ["UN", "CUB", "OQ", "AN", "TU"]
+tissue_types = ["HDB", "CUB", "OQ", "AN", "TU"]
 hox_nums = [2, 3, 4, 5, 6, 7]
 plot_hoxa = [f"HOXA{i}" for i in hox_nums]
 plot_probes = {
     hox_name: hoxa_probes[hox_name][k + 1] for k, hox_name in enumerate(plot_hoxa)
 }
 color_mapping = {
-    "UN": "slategray",
+    "HDB": "slategray",
     "CUB": "cornflowerblue",
     "OQ": "greenyellow",
     "AN": "goldenrod",
@@ -74,7 +74,7 @@ for i, tissue_type in enumerate(tissue_types):
 fig.suptitle("Distributions of methylation levels in HOXA genes", fontsize=16)
 
 # Add row labels with genes
-fig.text(0.02, 0.84, "UN", rotation=90, va="center", ha="center", fontsize=14)
+fig.text(0.02, 0.84, "HDB", rotation=90, va="center", ha="center", fontsize=14)
 fig.text(0.02, 0.664, "CUB", rotation=90, va="center", ha="center", fontsize=14)
 fig.text(0.02, 0.5, "OQ", rotation=90, va="center", ha="center", fontsize=14)
 fig.text(0.02, 0.33, "AN", rotation=90, va="center", ha="center", fontsize=14)

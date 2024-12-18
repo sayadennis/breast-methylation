@@ -65,7 +65,7 @@ get_probe_sets <- function(test_result, p_thres, effect_thres, pval_colname, slo
 #### Differential methylation analysis by tissue category ####
 ##############################################################
 
-refs <- c("UN", "CUB", "OQ", "AN", "UN", "UN", "CUB", "OQ", "AN")
+refs <- c("HDB", "CUB", "OQ", "AN", "HDB", "HDB", "CUB", "OQ", "AN")
 comps <- c("TU", "TU", "TU", "TU", "AN", "CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
@@ -151,7 +151,7 @@ for (i in seq_along(refs)) {
 #### Differential methylation along TPX separated by ER status ####
 ###################################################################
 
-refs <- c("UN", "CUB", "OQ", "AN")
+refs <- c("HDB", "CUB", "OQ", "AN")
 comps <- c("CUB", "OQ", "AN", "TU")
 
 for (i in seq_along(refs)) {
@@ -163,9 +163,9 @@ for (i in seq_along(refs)) {
   betas_sub <- betas[, paste0("X", meta_sub$IDAT)]
 
   for (er_status in c("+", "-")) {
-    # If reference if UN, set ER status accordingly to include all patients
-    if (ref == "UN") {
-      meta_sub[meta_sub$Sample.Region == "UN", "ER"] = er_status
+    # If reference if HDB, set ER status accordingly to include all patients
+    if (ref == "HDB") {
+      meta_sub[meta_sub$Sample.Region == "HDB", "ER"] = er_status
     }
     # Subset metadata and betas by ER status
     meta_sub_er <- meta_sub[meta_sub$ER == er_status, ]

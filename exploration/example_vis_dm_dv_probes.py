@@ -15,7 +15,7 @@ din = "/projects/p30791/methylation"
 plot_dir = "/projects/p30791/methylation/plots/differential_methylation"
 
 ref_comp_pairs_tpx = [  # pairs along the tumor proximity axis
-    ("UN", "CUB"),
+    ("HDB", "CUB"),
     # ("CUB", "OQ"),
     ("OQ", "AN"),
     ("AN", "TU"),
@@ -23,7 +23,7 @@ ref_comp_pairs_tpx = [  # pairs along the tumor proximity axis
 
 color_mapping = {
     "All": "darkslategray",
-    "UN": "slategray",
+    "HDB": "slategray",
     "CUB": "deepskyblue",
     "OQ": "forestgreen",
     "AN": "goldenrod",
