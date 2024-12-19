@@ -68,7 +68,7 @@ def get_results_attr_from_filename(kycg_base_fn: str) -> Dict:
         # Get comparison
         ref = kycg_base_fn.split("ref")[1].split("_")[0]
         comp = kycg_base_fn.split("comp")[1].split("_")[0]
-        attr_dict["comparison"] = f"{ref} vs {comp}"
+        attr_dict["comparison"] = f"{comp} vs {ref}"
         # Get trend
         attr_dict["trend"] = kycg_base_fn.split("_")[1].capitalize()
         # Get db category
@@ -83,7 +83,7 @@ def get_results_attr_from_filename(kycg_base_fn: str) -> Dict:
         ref = kycg_base_fn.split("ref")[1].split("_")[0]
         comp = kycg_base_fn.split("comp")[1].split("_")[0]
         er_status = "ER+" if "ER+" in kycg_base_fn else "ER-"
-        attr_dict["comparison"] = f"{er_status} {ref} vs {comp}"
+        attr_dict["comparison"] = f"{er_status} {comp} vs {ref}"
         # Get trend
         attr_dict["trend"] = kycg_base_fn.split("_")[1].capitalize()
         # Get db category
@@ -97,7 +97,7 @@ def get_results_attr_from_filename(kycg_base_fn: str) -> Dict:
         # Get comparison
         tissue = kycg_base_fn.split("_")[7]
         biomarker = "HER2" if "HER2" in kycg_base_fn else "ER"
-        attr_dict["comparison"] = f"{biomarker}- vs {biomarker}+ in {tissue}"
+        attr_dict["comparison"] = f"{biomarker}+ vs {biomarker}- in {tissue}"
         # Get trend
         attr_dict["trend"] = kycg_base_fn.split("_")[1].capitalize()
         # Get db category
@@ -111,7 +111,7 @@ def get_results_attr_from_filename(kycg_base_fn: str) -> Dict:
         # Get comparison
         ref = kycg_base_fn.split("_")[3]
         comp = kycg_base_fn.split("_")[5]
-        attr_dict["comparison"] = f"Relaxed {ref} vs {comp}"
+        attr_dict["comparison"] = f"Relaxed {comp} vs {ref}"
         # Get trend
         attr_dict["trend"] = kycg_base_fn.split("_")[2].capitalize()
         # Get db category
@@ -125,7 +125,7 @@ def get_results_attr_from_filename(kycg_base_fn: str) -> Dict:
         # Get comparison
         ref = kycg_base_fn.split("_")[3]
         comp = kycg_base_fn.split("_")[5]
-        attr_dict["comparison"] = f"DV {ref} vs {comp}"
+        attr_dict["comparison"] = f"DV {comp} vs {ref}"
         # Get trend
         attr_dict["trend"] = kycg_base_fn.split("DV")[0].split("_")[-1].capitalize()
         # Get db category
@@ -150,7 +150,7 @@ def get_results_attr_from_filename(kycg_base_fn: str) -> Dict:
     #     setname = setname.replace("_", " ").strip()
     #     tissue = kycg_base_fn.split("_")[7]
     #     biomarker = "HER2" if "HER2" in kycg_base_fn else "ER"
-    #     attr_dict["comparison"] = f"{biomarker}- vs {biomarker}+ in {tissue}"
+    #     attr_dict["comparison"] = f"{biomarker}+ vs {biomarker}- in {tissue}"
     #     # Get trend
     #     attr_dict["trend"] = kycg_base_fn.split("_")[1].capitalize()
     #     # Get db category

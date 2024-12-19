@@ -44,19 +44,19 @@ ref_comp_pairs_tpx = [  # pairs along the tumor proximity axis
 dml_results, dmr_results, dv_results = {}, {}, {}
 for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     # DML results
-    dml_results[f"{ref} vs {comp}"] = pd.read_csv(
+    dml_results[f"{comp} vs {ref}"] = pd.read_csv(
         f"{din_dm}/DML_results_ref{ref}_comp{comp}.csv"
     )
     # DMR results
-    dmr_results[f"{ref} vs {comp}"] = pd.read_csv(
+    dmr_results[f"{comp} vs {ref}"] = pd.read_csv(
         f"{din_dm}/DMR_results_Sample.Region{comp}_ref{ref}.csv"
     )
     # DV results
-    dv_results[f"{ref} vs {comp}"] = pd.read_csv(
+    dv_results[f"{comp} vs {ref}"] = pd.read_csv(
         f"{din_dv}/topDV_{ref}_vs_{comp}.csv", index_col=0
     )
     # While we're here, write the lists of all probe sets
-    dml_results[f"{ref} vs {comp}"].Probe_ID.to_csv(
+    dml_results[f"{comp} vs {ref}"].Probe_ID.to_csv(
         f"{dout_dm}/all_probes_DM/all_probes_{ref}_vs_{comp}.txt",
         header=False,
         index=False,
@@ -80,7 +80,7 @@ effect_thres = config["effect_thres"]
 num_diff_probes = pd.DataFrame(
     0.0,
     index=[
-        f"{ref} vs {comp}"
+        f"{comp} vs {ref}"
         for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
     ],
     columns=["Higher", "Lower"],
@@ -90,22 +90,22 @@ trends = pd.DataFrame(
         set().union(*(df["Probe_ID"] for df in dml_results.values()))
     ),  # all probes
     columns=[
-        f"{ref} vs {comp}"
+        f"{comp} vs {ref}"
         for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
     ],
 )
 
 for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
-    p_vals = dml_results[f"{ref} vs {comp}"][f"Pval_Sample.Region{comp}"]
-    p_vals.index = dml_results[f"{ref} vs {comp}"].Probe_ID
+    p_vals = dml_results[f"{comp} vs {ref}"][f"Pval_Sample.Region{comp}"]
+    p_vals.index = dml_results[f"{comp} vs {ref}"].Probe_ID
     # fix underflow (p=0) by replacing zero with non-zero minimum
     p_nonzero_min = np.min(p_vals.iloc[p_vals.values != 0])
     p_vals.replace(0, p_nonzero_min, inplace=True)
     # replace p=NaN with non-significant p
     p_vals.fillna(0.999999, inplace=True)
     # obtain slope to decipher trend
-    slope = dml_results[f"{ref} vs {comp}"][f"Est_Sample.Region{comp}"]
-    slope.index = dml_results[f"{ref} vs {comp}"].Probe_ID
+    slope = dml_results[f"{comp} vs {ref}"][f"Est_Sample.Region{comp}"]
+    slope.index = dml_results[f"{comp} vs {ref}"].Probe_ID
     # find hypermethylated probes
     pos_sig = (false_discovery_control(p_vals) < p_thres) & (slope >= effect_thres)
     # find hypomethylated probes
@@ -113,10 +113,10 @@ for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
         slope <= (-1) * effect_thres
     )
     # record information
-    num_diff_probes.loc[f"{ref} vs {comp}", "Higher"] = pos_sig.sum()
-    num_diff_probes.loc[f"{ref} vs {comp}", "Lower"] = neg_sig.sum()
-    trends.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "hyper"
-    trends.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "hypo"
+    num_diff_probes.loc[f"{comp} vs {ref}", "Higher"] = pos_sig.sum()
+    num_diff_probes.loc[f"{comp} vs {ref}", "Lower"] = neg_sig.sum()
+    trends.loc[pos_sig.iloc[pos_sig.values].index, f"{comp} vs {ref}"] = "hyper"
+    trends.loc[neg_sig.iloc[neg_sig.values].index, f"{comp} vs {ref}"] = "hypo"
 
 num_diff_probes.to_csv(f"{din_dm}/number_dml_probes_btwn_categories.csv")
 print(num_diff_probes.to_markdown())  # printing for Wiki
@@ -125,7 +125,7 @@ trends.dropna(axis=0, how="all", inplace=True)
 trends = trends.loc[[x.startswith("cg") for x in trends.index], :]
 trends.fillna("n.d.", inplace=True)
 
-trends[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]].to_csv(
+trends[[f"{comp} vs {ref}" for ref, comp in ref_comp_pairs_tpx]].to_csv(
     f"{din_dm}/dml_hyper_hypo_pairwise_trends.csv"
 )
 
@@ -134,24 +134,24 @@ trends[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]].to_csv(
 trends_dv = pd.DataFrame(
     index=list(set().union(*(df.index for df in dv_results.values()))),  # all probes
     columns=[
-        f"{ref} vs {comp}"
+        f"{comp} vs {ref}"
         for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals)
     ],
 )
 
 for ref, comp in set(ref_comp_pairs_tpx + ref_comp_pairs_normals):
     # obtain slope and p-value
-    logvarratio = dv_results[f"{ref} vs {comp}"]["LogVarRatio"]
-    p_vals = dv_results[f"{ref} vs {comp}"]["Adj.P.Value"]
+    logvarratio = dv_results[f"{comp} vs {ref}"]["LogVarRatio"]
+    p_vals = dv_results[f"{comp} vs {ref}"]["Adj.P.Value"]
     # find hypermethylated probes
     pos_sig = (p_vals < p_thres) & (logvarratio >= 0.2)
     # find hypomethylated probes
     neg_sig = (p_vals < p_thres) & (logvarratio <= (-1) * 0.2)
     # record information
-    trends_dv.loc[pos_sig.iloc[pos_sig.values].index, f"{ref} vs {comp}"] = "hyper"
-    trends_dv.loc[neg_sig.iloc[neg_sig.values].index, f"{ref} vs {comp}"] = "hypo"
+    trends_dv.loc[pos_sig.iloc[pos_sig.values].index, f"{comp} vs {ref}"] = "hyper"
+    trends_dv.loc[neg_sig.iloc[neg_sig.values].index, f"{comp} vs {ref}"] = "hypo"
 
-trends_dv = trends_dv[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]]
+trends_dv = trends_dv[[f"{comp} vs {ref}" for ref, comp in ref_comp_pairs_tpx]]
 
 trends_dv.dropna(axis=0, how="all", inplace=True)
 trends_dv = trends_dv.loc[[x.startswith("cg") for x in trends_dv.index], :]
@@ -238,7 +238,7 @@ for identifier, pairs in zip(
             axs[i, j].spines["right"].set_visible(False)
             axs[i, j].set_xticks(np.arange(4))
             axs[i, j].set_xticklabels(
-                [f"{ref} vs {comp}" for ref, comp in pairs], ha="right", rotation=30
+                [f"{comp} vs {ref}" for ref, comp in pairs], ha="right", rotation=30
             )
             axs[i, j].set_ylim(0, bar_max)
             axs[i, j].yaxis.set_major_formatter(FuncFormatter(format_ticks))
@@ -261,7 +261,7 @@ for identifier, pairs in zip(
 #########################################################
 
 # From here, we only focus on comparisons along the TPX
-trends = trends[[f"{ref} vs {comp}" for ref, comp in ref_comp_pairs_tpx]]
+trends = trends[[f"{comp} vs {ref}" for ref, comp in ref_comp_pairs_tpx]]
 
 #### Define set names and their specific patterns ####
 set_patterns = {
@@ -542,11 +542,11 @@ seg_cols = [
 ]
 
 for ref, comp in ref_comp_pairs_tpx:
-    print(f"#### Comparison - {ref} vs {comp} ####")
-    segs = dmr_results[f"{ref} vs {comp}"][seg_cols].drop_duplicates(ignore_index=True)
+    print(f"#### Comparison - {comp} vs {ref} ####")
+    segs = dmr_results[f"{comp} vs {ref}"][seg_cols].drop_duplicates(ignore_index=True)
     segs.set_index("Seg_ID", drop=True, inplace=True)
     # Number of probes per segment
-    num_probes = dmr_results[f"{ref} vs {comp}"].groupby("Seg_ID").size()
+    num_probes = dmr_results[f"{comp} vs {ref}"].groupby("Seg_ID").size()
     # Segment length (kb) distribution
     seglen = pd.Series(segs.Seg_End - segs.Seg_Start, index=segs.index)
     for n in [1, 10, 50, 100, 250, 500, 750]:

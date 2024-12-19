@@ -61,8 +61,8 @@ ax.set_xlabel("Percentages (%)")
 ax.legend(ncols=1, bbox_to_anchor=(1.01, 0.5), loc="center left", fontsize="small")
 
 # Add row labels with genes
-fig.text(0.02, 0.78, "HDB vs CUB", rotation=90, va="center", ha="center", fontsize=12)
-fig.text(0.02, 0.30, "AN vs TU", rotation=90, va="center", ha="center", fontsize=12)
+fig.text(0.02, 0.78, "CUB vs HDB", rotation=90, va="center", ha="center", fontsize=12)
+fig.text(0.02, 0.30, "TU vs AN", rotation=90, va="center", ha="center", fontsize=12)
 
 plt.tight_layout()
 plt.subplots_adjust(left=0.10)

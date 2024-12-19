@@ -214,7 +214,7 @@ for ref, comp in ref_comp_pairs_tpx:
         ax=axs[0],
         palette=color_mapping,
     )
-    axs[0].set_title(f"DM Example Probes for {ref} vs {comp}", fontsize=14)
+    axs[0].set_title(f"DM Example Probes for {comp} vs {ref}", fontsize=14)
     axs[0].set_ylim(0, 1.05)
     axs[0].set_xticklabels(axs[0].get_xticklabels(), rotation=30)
     axs[0].set_xlabel("")
@@ -228,7 +228,7 @@ for ref, comp in ref_comp_pairs_tpx:
         ax=axs[1],
         palette=color_mapping,
     )
-    axs[1].set_title(f"DV Example Probes for {ref} vs {comp}", fontsize=14)
+    axs[1].set_title(f"DV Example Probes for {comp} vs {ref}", fontsize=14)
     axs[1].set_ylim(0, 1.05)
     axs[1].set_xticklabels(axs[1].get_xticklabels(), rotation=30)
     axs[1].set_xlabel("")
@@ -257,7 +257,7 @@ for ref, comp in ref_comp_pairs_tpx:
         bw_adjust=0.5,  # less smoothing
         ax=axs[0],
     )
-    axs[0].set_title(f"DM Examples Probes for {ref} vs {comp}")
+    axs[0].set_title(f"DM Examples Probes for {comp} vs {ref}")
     axs[0].spines["right"].set_visible(False)
     axs[0].spines["top"].set_visible(False)
     axs[0].set_ylim(0, 1.05)
@@ -276,7 +276,7 @@ for ref, comp in ref_comp_pairs_tpx:
         bw_adjust=0.5,  # less smoothing
         ax=axs[1],
     )
-    axs[1].set_title(f"DV Example Probes for {ref} vs {comp}")
+    axs[1].set_title(f"DV Example Probes for {comp} vs {ref}")
     axs[1].spines["right"].set_visible(False)
     axs[1].spines["top"].set_visible(False)
     axs[1].set_ylim(0, 1.05)

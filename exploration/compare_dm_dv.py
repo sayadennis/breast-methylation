@@ -37,7 +37,7 @@ for ref, comp in comparisons:
         )
     # Count overlapping and unique probes
     overlap = set(dm_probes).intersection(set(dv_probes))
-    cts[f"{ref} vs {comp}"] = {
+    cts[f"{comp} vs {ref}"] = {
         "DV-only": len(dv_probes) - len(overlap),
         "DM-only": len(dm_probes) - len(overlap),
         "overlap": len(overlap),
@@ -52,14 +52,14 @@ fig, axs = plt.subplots(nrows=1, ncols=len(comparisons), figsize=(12, 4))
 for i, (ref, comp) in enumerate(comparisons):
     venn2(
         subsets=(
-            cts[f"{ref} vs {comp}"]["DV-only"],  # left-hand unique
-            cts[f"{ref} vs {comp}"]["DM-only"],  # right-hand unique
-            cts[f"{ref} vs {comp}"]["overlap"],  # overlap
+            cts[f"{comp} vs {ref}"]["DV-only"],  # left-hand unique
+            cts[f"{comp} vs {ref}"]["DM-only"],  # right-hand unique
+            cts[f"{comp} vs {ref}"]["overlap"],  # overlap
         ),
         set_labels=("DV", "DM"),
         ax=axs[i],
     )
-    axs[i].set_title(f"{ref} vs {comp}", fontsize=14)
+    axs[i].set_title(f"{comp} vs {ref}", fontsize=14)
 
 plt.tight_layout()
 fig.savefig(f"{dout}/venn_DV_vs_DM.png")
