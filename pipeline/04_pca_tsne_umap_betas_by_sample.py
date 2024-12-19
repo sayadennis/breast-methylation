@@ -30,6 +30,13 @@ meta.loc[:, "HER2"] = meta["HER2"].map(
     }
 )
 
+meta.loc[:, "ER"] = meta["ER"].map(
+    {
+        "-": "Negative",
+        "+": "Positive",
+    }
+)
+
 ## Create mappings between IDAT IDs, tissue category, and integers
 idat_to_region = dict(zip(meta["IDAT"], meta["Sample Region"]))
 label_int_mapping = {"HDB": 0, "CUB": 1, "OQ": 2, "AN": 3, "TU": 4}
@@ -174,7 +181,7 @@ print("Input data shape:", betas_cases.T.shape)
 tumormeta_to_plot = {
     "Cancer type": ["IDC", "ILC", "DCIS"],
     "Grade": ["I", "II", "III"],
-    "ER": ["+", "-"],
+    "ER": ["Positive", "Negative"],
     "PgR": ["+", "-"],
     "HER2": ["Positive", "Negative"],
 }
@@ -260,7 +267,7 @@ for feature_name, categories in tumormeta_to_plot.items():
             # axs[0].set_ylabel(f"PC2 ({100 * pca.explained_variance_ratio_[1]:.1f}%)")
             if j == 0:
                 axs[i, j].legend()
-                axs[i, j].set_ylabel(f"{feature_name}={category}", fontsize=14)
+                axs[i, j].set_ylabel(f"{feature_name} {category}", fontsize=14)
             if i == 0:
                 axs[i, j].set_title(method, fontsize=14)
     fig.suptitle(
@@ -277,7 +284,7 @@ for feature_name, categories in tumormeta_to_plot.items():
 #### Plot just tSNE for ER ####
 
 feature_name = "ER"
-categories = ["+", "-"]
+categories = ["Positive", "Negative"]
 
 fig, axs = plt.subplots(
     nrows=len(categories), ncols=1, figsize=(3, 2.5 * len(categories))
@@ -322,7 +329,7 @@ for i, category in enumerate(categories):
     axs[i].spines["top"].set_visible(False)
     axs[i].spines["right"].set_visible(False)
     axs[i].legend()
-    axs[i].set_ylabel(f"{feature_name}={category}", fontsize=14)
+    axs[i].set_ylabel(f"{feature_name} {category}", fontsize=14)
     if i == 0:
         axs[i].set_title("tSNE", fontsize=14)
 
@@ -335,7 +342,7 @@ plt.close()
 #### Experimental plotting ####
 
 tumormeta = {
-    "ER": {0: "-", 1: "+"},
+    "ER": {0: "Negative", 1: "Positive"},
     "HER2": {0: "Negative", 1: "Positive"},
 }
 
